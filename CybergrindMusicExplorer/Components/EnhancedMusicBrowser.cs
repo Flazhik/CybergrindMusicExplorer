@@ -23,7 +23,14 @@ namespace CybergrindMusicExplorer.Components
         private const string BaseCanvasPath = "/FirstRoom/Room/CyberGrindSettings/Canvas/SoundtrackMusic/Panel/";
 
         private static readonly string CustomSongsPath = Path.Combine(UltrakillPath, "CyberGrind", "Music");
-        
+
+        private static Dictionary<string, AudioType> _audioTypesByExtension = new Dictionary<string, AudioType>
+        {
+            { ".mp3", AudioType.MPEG },
+            { ".wav", AudioType.WAV },
+            { ".ogg", AudioType.OGGVORBIS }
+        };
+
         public static event Action OnInit;
 
         [Header("References")] [SerializeField]
@@ -91,7 +98,7 @@ namespace CybergrindMusicExplorer.Components
         private IDirectoryTree<TrackReference> CustomSongsFolder()
         {
             var files = customSongsDirectory.GetFilesRecursive()
-                .Where(file => file.Extension.ToLower() == ".mp3")
+                .Where(file => _audioTypesByExtension.ContainsKey(file.Extension.ToLower()))
                 .Select((file, i) => new TrackReference(SoundtrackType.External, file.Name))
                 .ToList();
 
@@ -145,8 +152,8 @@ namespace CybergrindMusicExplorer.Components
                             Destroy(placeholder);
                             yield break;
                         }
-                        else
-                            song = referenceCache[reference];
+
+                        song = referenceCache[reference];
                     }
                     else
                     {
@@ -173,7 +180,7 @@ namespace CybergrindMusicExplorer.Components
                 }
                 case SoundtrackType.External:
                 {
-                    Playlist.SongData song;
+                    Playlist.SongData song = null;
                     if (customReferenceCache.ContainsKey(reference))
                     {
                         Debug.LogWarning("[CybergrindMusicExplorer] No referenceCache present");
@@ -183,12 +190,11 @@ namespace CybergrindMusicExplorer.Components
                             Destroy(placeholder);
                             yield break;
                         }
-                        else
-                            song = customReferenceCache[reference];
+
+                        song = customReferenceCache[reference];
                     }
                     else
                     {
-                        Debug.LogError($"[CybergrindMusicExplorer] {reference.Reference}");
                         var fileInfo = new FileInfo(Path.Combine(CustomSongsPath, reference.Reference));
                         var fullPath = fileInfo.FullName;
 
@@ -201,26 +207,37 @@ namespace CybergrindMusicExplorer.Components
                         }
 
                         AudioClip audioClip = null;
-                        referenceCache.Add(reference, null);
-                        yield return StartCoroutine(LoadCustomSong(fullPath, clip => audioClip = clip));
-
+                        
+                        yield return StartCoroutine(LoadCustomSong(fullPath, _audioTypesByExtension[fileInfo.Extension],  clip => audioClip = clip));
+                        
                         if (btn == null)
-                        {
                             Destroy(placeholder);
+
+                        if (audioClip != null)
+                        {
+                            try
+                            {
+                                var metadata = CustomTrackMetadata.From(File.Create(fileInfo.FullName));
+                                song = SongDataFromCustomAudioClip(audioClip,
+                                    metadata.Title ?? Path.GetFileNameWithoutExtension(fileInfo.Name), metadata.Artist,
+                                    metadata.Logo ? metadata.Logo : defaultIcon);
+                                
+                                customReferenceCache[reference] = song;
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.Log($"[CybergrindMusicExplorer] Can't retrieve custom track {reference.Reference} metadata");
+                                Destroy(btn);
+                            }
                         }
 
-                        var metadata = CustomTrackMetadata.From(File.Create(fileInfo.FullName));
-                        song = SongDataFromCustomAudioClip(audioClip,
-                            metadata.Title ?? Path.GetFileNameWithoutExtension(fileInfo.Name), metadata.Artist,
-                            metadata.Logo ? metadata.Logo : defaultIcon);
-
-                        customReferenceCache[reference] = song;
                         if (btn == null)
                             yield break;
                     }
 
                     Destroy(placeholder);
-                    DrawCustomTrackButton(song, reference, btn);
+                    if (song != null)
+                        DrawCustomTrackButton(song, reference, btn);
                     break;
                 }
                 default:

@@ -2,8 +2,6 @@
 
 An ULTRAKILL mod that allows you to add your own tracks to CyberGrind playlist.
 
-![preview](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/713130e5-5e08-4095-9801-0ec360e08b0d)
-
 ## Disclaimer
 
 Custom music in Cyber Grind playlist is an upcoming feature of ULTRAKILL, so you can use this mod until custom tracks
@@ -12,7 +10,7 @@ This mod does not affect the folder with original soundtrack, so you can combine
 
 ### **N.B.!**
 
-At the current stage of developement, this mod only supports .mp3 tracks and no sub-folders: all the tracks should be
+At the current stage of developement, this mod only supports .mp3, .wav and .ogg tracks and no sub-folders: all the tracks should be
 placed in one directory.
 
 ## Installation
@@ -26,12 +24,8 @@ ________________________________________________________________________________
    is located, find **ULTRAKILL** in your Steam Library > Right mouse click > **Properties** > **Local files** > *
    *Browse**
 3. Download the CybergrindMusicExplorer
-   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.0.0/CybergrindMusicExplorer.v1.0.0.zip), then
+   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.0.1/CybergrindMusicExplorer.v1.0.1.zip), then
    extract its contents at **ULTRAKILL/BepInEx/plugins** (create *plugins* folder manually in case it's missing)
-   
-   The structure should look something like this:
-   
-   ![preview](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/d78e768e-e4a1-400c-aa6c-c134702dd65b)
 
 ## Using the mod
 

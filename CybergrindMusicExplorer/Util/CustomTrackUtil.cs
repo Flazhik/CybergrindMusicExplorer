@@ -8,26 +8,30 @@ namespace CybergrindMusicExplorer.Util
 {
     public class CustomTrackUtil
     {
-        public static UnityWebRequestAsyncOperation LoadCustomSong(string path)
-        {
-            using (var uwr = UnityWebRequestMultimedia.GetAudioClip(new Uri(path), AudioType.MPEG))
-            {
-                return uwr.SendWebRequest();
-            }
-        }
 
-        public static IEnumerator LoadCustomSong(string path, Action<AudioClip> callback)
+        public static IEnumerator LoadCustomSong(string path, AudioType audioType, Action<AudioClip> callback)
         {
-            AudioClip audioClip;
-            using (var request = UnityWebRequestMultimedia.GetAudioClip(new Uri(path), AudioType.MPEG))
+            AudioClip audioClip = null;
+            using (var request = UnityWebRequestMultimedia.GetAudioClip(new Uri(path), audioType))
             {
-                // ((DownloadHandlerAudioClip)request.downloadHandler).streamAudio = true;
                 yield return request.SendWebRequest();
+                
+                if (request.error != null)
+                {
+                    Debug.LogError(request.error);
+                    yield break;
+                }
 
-                audioClip = DownloadHandlerAudioClip.GetContent(request);
-                while (!audioClip || !audioClip.isReadyToPlay)
-                    yield return new WaitForSeconds(1);
-
+                try
+                {
+                    audioClip = DownloadHandlerAudioClip.GetContent(request);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Cannot parse audioclip {path}");
+                    yield break;
+                }
+                
                 if (audioClip == null)
                 {
                     Debug.LogError($"Downloaded AudioClip is null, path=[{path}].");
@@ -37,6 +41,7 @@ namespace CybergrindMusicExplorer.Util
                 if (request.error != null)
                 {
                     Debug.LogError("Unexpected error, can't download AudioClip path=[{path}].");
+                    yield break;
                 }
             }
 
