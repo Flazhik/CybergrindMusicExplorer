@@ -12,6 +12,9 @@ namespace CybergrindMusicExplorer.Components
 {
     public class EnhancedMusicPlayer : MonoBehaviour
     {
+        private readonly CybergrindMusicExplorerManager musicExplorerManager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
+        private readonly MusicManager musicManager = MonoSingleton<MusicManager>.Instance;
+        
         [SerializeField] private CanvasGroup panelGroup;
         [SerializeField] private Text panelText;
         [SerializeField] private Image panelIcon;
@@ -51,7 +54,7 @@ namespace CybergrindMusicExplorer.Components
         {
             panelText.text = song.name.ToUpper();
             panelIcon.sprite = song.icon != null ? song.icon : defaultIcon;
-            float time = 0.0f;
+            var time = 0.0f;
             while (time < (double)panelApproachTime)
             {
                 time += Time.deltaTime;
@@ -60,7 +63,12 @@ namespace CybergrindMusicExplorer.Components
             }
 
             panelGroup.alpha = 1f;
-            yield return new WaitForSecondsRealtime(panelStayTime);
+
+            if (musicExplorerManager.ShowCurrentTrackPanelIndefinitely)
+                yield return new WaitUntil(() => !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying);
+            else
+                yield return new WaitForSecondsRealtime(panelStayTime);
+            
             time = panelApproachTime;
             while (time > 0.0)
             {
@@ -74,13 +82,12 @@ namespace CybergrindMusicExplorer.Components
 
         private IEnumerator PlaylistRoutine()
         {
-            EnhancedMusicPlayer musicPlayer = this;
-            WaitUntil themeNotPlaying = new WaitUntil(() =>
-                Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying);
+            var musicPlayer = this;
+            var themeNotPlaying = new WaitUntil(() => Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying);
             Playlist.SongData lastSong = null;
-            bool first = true;
-            CustomPlaylist playlist = musicPlayer.playlistEditor.customPlaylist;
-            IEnumerable<TrackReference> currentOrder = playlist.shuffled
+            var first = true;
+            var playlist = musicPlayer.playlistEditor.customPlaylist;
+            var currentOrder = playlist.shuffled
                 ? (IEnumerable<TrackReference>)new DeckShuffled<TrackReference>(playlist.References)
                 : playlist.References;
 
@@ -90,7 +97,7 @@ namespace CybergrindMusicExplorer.Components
             {
                 if (currentOrder is DeckShuffled<TrackReference> deckShuffled)
                     deckShuffled.Reshuffle();
-                foreach (TrackReference reference in currentOrder)
+                foreach (var reference in currentOrder)
                 {
                     Playlist.SongData currentSong;
                     musicPlayer.playlistEditor.customPlaylist.GetSongData(reference, out currentSong);
@@ -107,8 +114,8 @@ namespace CybergrindMusicExplorer.Components
                         first = false;
                     }
 
-                    int i = 0;
-                    foreach (AudioClip clip in currentSong.clips)
+                    var i = 0;
+                    foreach (var clip in currentSong.clips)
                     {
                         if (musicPlayer.playlistEditor.customPlaylist.loopMode == Playlist.LoopMode.LoopOne ||
                             currentSong.maxClips <= -1 || i < currentSong.maxClips)

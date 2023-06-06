@@ -28,6 +28,9 @@ namespace CybergrindMusicExplorer.Components
             Path.Combine(UltrakillPath, "Preferences", "EnhancedPlaylist.json");
 
         private static readonly string CustomSongsPath = Path.Combine(UltrakillPath, "CyberGrind", "Music");
+        
+        private readonly CybergrindMusicExplorerManager musicExplorerManager =
+            MonoSingleton<CybergrindMusicExplorerManager>.Instance;
 
         [SerializeField] private EnhancedMusicBrowser browser;
         [SerializeField] private Sprite defaultIcon;
@@ -152,6 +155,10 @@ namespace CybergrindMusicExplorer.Components
 
                             var metadata = CustomTrackMetadata.From(TagLib.File.Create(fileInfo.FullName));
                             var audioClip = LoadCustomSong(fileInfo);
+                            
+                            if (musicExplorerManager.NormalizeSoundtrack)
+                                Normalize(audioClip);
+                            
                             customPlaylist.AddTrack(reference,
                                 SongDataFromCustomAudioClip(audioClip,
                                     metadata.Title ?? Path.GetFileNameWithoutExtension(fileInfo.Name), metadata.Artist,

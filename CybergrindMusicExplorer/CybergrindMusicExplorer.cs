@@ -2,9 +2,11 @@
 using System.IO;
 using BepInEx;
 using CybergrindMusicExplorer.Components;
+using CybergrindMusicExplorer.Patches;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static CybergrindMusicExplorer.Util.Patching.PatchRequest;
 
 namespace CybergrindMusicExplorer
 
@@ -16,7 +18,6 @@ namespace CybergrindMusicExplorer
         private readonly Harmony _harmony = new Harmony("Flazhik.ULTRAKILL.CybergrindMusicExplorer");
         private static EnhancedMusicPlaylistEditor _editor;
         private EnhancedMusicBrowser _browser;
-        private static bool _patched;
 
         private void Awake()
         {
@@ -35,25 +36,42 @@ namespace CybergrindMusicExplorer
         {
             if (scene != SceneManager.GetActiveScene())
                 return;
-
-            // Cybergrind
-            if (SceneHelper.CurrentScene == "Endless" && _browser == null)
+            
+            switch (SceneHelper.CurrentScene)
             {
-                EnhancedMusicBrowser.OnInit += OnEnhancedBrowserInit;
-                var oldBrowser = FindObjectOfType<CustomMusicSoundtrackBrowser>();
-                var musicObject = oldBrowser.transform.gameObject;
-                _browser = musicObject.AddComponent<EnhancedMusicBrowser>();
-                Destroy(oldBrowser);
+                case "Main Menu":
+                {
+                    PatchMethod(typeof(OptionsMenuToManager), "Start")
+                        .WithPrefix(typeof(OptionsMenuToManagerPatch), "OptionsMenuToManager_Start_Prefix")
+                        .Using(_harmony)
+                        .Once();
+                    break;
+                }
+                case "Endless":
+                {
+                    if (_browser != null)
+                        break;
+                    OnCybergrind();
+                    break;
+                }
             }
+        }
+        private void OnCybergrind()
+        {
+            EnhancedMusicBrowser.OnInit += OnEnhancedBrowserInit;
+            var oldBrowser = FindObjectOfType<CustomMusicSoundtrackBrowser>();
+            var musicObject = oldBrowser.transform.gameObject;
+            _browser = musicObject.AddComponent<EnhancedMusicBrowser>();
+            Destroy(oldBrowser);
         }
 
         private void OnEnhancedBrowserInit()
         {
             _editor = FindObjectOfType<EnhancedMusicPlaylistEditor>();
-
-            if (_patched) return;
-            _harmony.PatchAll();
-            _patched = true;
+            PatchMethod(typeof(CustomMusicPlayer), "OnEnable")
+                .WithPrefix(typeof(CustomMusicPlayerPatch), "CustomMusicPlayer_OnEnable_Prefix")
+                .Using(_harmony)
+                .Once();
         }
 
         public static EnhancedMusicPlaylistEditor GetEnhancedPlaylistEditor()

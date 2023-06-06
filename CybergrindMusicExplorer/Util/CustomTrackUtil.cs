@@ -1,13 +1,25 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Networking;
 
 namespace CybergrindMusicExplorer.Util
 {
-    public class CustomTrackUtil
+    public static class CustomTrackUtil
     {
+        
+        public static void Normalize(AudioClip audioClip)  {
+            float[] samples = new float[audioClip.samples * audioClip.channels];
+            audioClip.GetData(samples, 0);
+            
+            var max = samples.Select(Math.Abs).Prepend(float.MinValue).Max();
+            for (var i = 0; i < samples.Length; i++) samples[i] /= max;
+
+            audioClip.SetData(samples, 0);
+        }
 
         public static IEnumerator LoadCustomSong(string path, AudioType audioType, Action<AudioClip> callback)
         {

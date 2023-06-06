@@ -2,6 +2,8 @@
 
 An ULTRAKILL mod that allows you to add your own tracks to CyberGrind playlist.
 
+![Untitled-2](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/50dfa9d9-514c-413c-95c7-2ca515ea5359)
+
 ## Disclaimer
 
 Custom music in Cyber Grind playlist is an upcoming feature of ULTRAKILL, so you can use this mod until custom tracks
@@ -10,12 +12,10 @@ This mod does not affect the folder with original soundtrack, so you can combine
 
 ### **N.B.!**
 
-At the current stage of developement, this mod only supports .mp3, .wav and .ogg tracks and no sub-folders: all the tracks should be
+At the current stage of developement, this mod doesn't support sub-folders: all the tracks should be
 placed in one directory.
 
 ## Installation
-
-_______________________________________________________________________________________________________________________________________
 
 1. Download the freshest **BepInEx** release from [here](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.21). It's
    recommended to choose **BepInEx_x64** release unless you're certain you have a 32-bit system
@@ -24,8 +24,14 @@ ________________________________________________________________________________
    is located, find **ULTRAKILL** in your Steam Library > Right mouse click > **Properties** > **Local files** > *
    *Browse**
 3. Download the CybergrindMusicExplorer
-   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.0.1/CybergrindMusicExplorer.v1.0.1.zip), then
+   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.1.0/CybergrindMusicExplorer.v1.1.0.zip), then
    extract its contents at **ULTRAKILL/BepInEx/plugins** (create *plugins* folder manually in case it's missing)
+   
+## Additional features
+The mod also supports custom track normalization: you don't have to worry your custom track is going to be too quiet or to loud.
+All the currently available tweakable options are available in ULTRAKILL Audio options.
+
+![tweak](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/3edf177c-e022-40a1-bd1b-d88d46087208)
 
 ## Using the mod
 

@@ -21,15 +21,17 @@ namespace CybergrindMusicExplorer.Components
             Directory.GetParent(Application.dataPath)?.FullName ?? FallbackUltrakillPath;
         private const string FallbackUltrakillPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\ULTRAKILL";
         private const string BaseCanvasPath = "/FirstRoom/Room/CyberGrindSettings/Canvas/SoundtrackMusic/Panel/";
-
         private static readonly string CustomSongsPath = Path.Combine(UltrakillPath, "CyberGrind", "Music");
 
-        private static Dictionary<string, AudioType> _audioTypesByExtension = new Dictionary<string, AudioType>
+        private static readonly Dictionary<string, AudioType> AudioTypesByExtension = new Dictionary<string, AudioType>
         {
             { ".mp3", AudioType.MPEG },
             { ".wav", AudioType.WAV },
             { ".ogg", AudioType.OGGVORBIS }
         };
+
+        private readonly CybergrindMusicExplorerManager musicExplorerManager =
+            MonoSingleton<CybergrindMusicExplorerManager>.Instance;
 
         public static event Action OnInit;
 
@@ -98,7 +100,7 @@ namespace CybergrindMusicExplorer.Components
         private IDirectoryTree<TrackReference> CustomSongsFolder()
         {
             var files = customSongsDirectory.GetFilesRecursive()
-                .Where(file => _audioTypesByExtension.ContainsKey(file.Extension.ToLower()))
+                .Where(file => AudioTypesByExtension.ContainsKey(file.Extension.ToLower()))
                 .Select((file, i) => new TrackReference(SoundtrackType.External, file.Name))
                 .ToList();
 
@@ -208,7 +210,7 @@ namespace CybergrindMusicExplorer.Components
 
                         AudioClip audioClip = null;
                         
-                        yield return StartCoroutine(LoadCustomSong(fullPath, _audioTypesByExtension[fileInfo.Extension],  clip => audioClip = clip));
+                        yield return StartCoroutine(LoadCustomSong(fullPath, AudioTypesByExtension[fileInfo.Extension],  clip => audioClip = clip));
                         
                         if (btn == null)
                             Destroy(placeholder);
@@ -221,7 +223,10 @@ namespace CybergrindMusicExplorer.Components
                                 song = SongDataFromCustomAudioClip(audioClip,
                                     metadata.Title ?? Path.GetFileNameWithoutExtension(fileInfo.Name), metadata.Artist,
                                     metadata.Logo ? metadata.Logo : defaultIcon);
-                                
+
+                                if (musicExplorerManager.NormalizeSoundtrack)
+                                    Normalize(audioClip);
+
                                 customReferenceCache[reference] = song;
                             }
                             catch (Exception e)
