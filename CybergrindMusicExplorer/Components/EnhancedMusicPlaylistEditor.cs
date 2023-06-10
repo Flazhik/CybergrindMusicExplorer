@@ -28,7 +28,7 @@ namespace CybergrindMusicExplorer.Components
             Path.Combine(UltrakillPath, "Preferences", "EnhancedPlaylist.json");
 
         private static readonly string CustomSongsPath = Path.Combine(UltrakillPath, "CyberGrind", "Music");
-        
+
         private readonly CybergrindMusicExplorerManager musicExplorerManager =
             MonoSingleton<CybergrindMusicExplorerManager>.Instance;
 
@@ -130,7 +130,7 @@ namespace CybergrindMusicExplorer.Components
                 var outdatedTracks = new List<TrackReference>();
                 foreach (var reference in loadedPlaylist.References)
                 {
-                    Debug.Log($"[CybergrindMusicExplorer] {reference.Reference}");
+                    Debug.Log($"[CybergrindMusicExplorer] Loading track {reference.Reference}");
                     switch (reference.Type)
                     {
                         case SoundtrackType.Asset:
@@ -155,10 +155,10 @@ namespace CybergrindMusicExplorer.Components
 
                             var metadata = CustomTrackMetadata.From(TagLib.File.Create(fileInfo.FullName));
                             var audioClip = LoadCustomSong(fileInfo);
-                            
+
                             if (musicExplorerManager.NormalizeSoundtrack)
                                 Normalize(audioClip);
-                            
+
                             customPlaylist.AddTrack(reference,
                                 SongDataFromCustomAudioClip(audioClip,
                                     metadata.Title ?? Path.GetFileNameWithoutExtension(fileInfo.Name), metadata.Artist,

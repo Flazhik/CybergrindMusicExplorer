@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CybergrindMusicExplorer.Data;
+using HarmonyLib;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
@@ -19,6 +20,7 @@ namespace CybergrindMusicExplorer.Components
     {
         private static readonly string UltrakillPath =
             Directory.GetParent(Application.dataPath)?.FullName ?? FallbackUltrakillPath;
+
         private const string FallbackUltrakillPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\ULTRAKILL";
         private const string BaseCanvasPath = "/FirstRoom/Room/CyberGrindSettings/Canvas/SoundtrackMusic/Panel/";
         private static readonly string CustomSongsPath = Path.Combine(UltrakillPath, "CyberGrind", "Music");
@@ -209,9 +211,10 @@ namespace CybergrindMusicExplorer.Components
                         }
 
                         AudioClip audioClip = null;
-                        
-                        yield return StartCoroutine(LoadCustomSong(fullPath, AudioTypesByExtension[fileInfo.Extension],  clip => audioClip = clip));
-                        
+
+                        yield return StartCoroutine(LoadCustomSong(fullPath, AudioTypesByExtension[fileInfo.Extension],
+                            clip => audioClip = clip));
+
                         if (btn == null)
                             Destroy(placeholder);
 
@@ -231,7 +234,8 @@ namespace CybergrindMusicExplorer.Components
                             }
                             catch (Exception e)
                             {
-                                Debug.Log($"[CybergrindMusicExplorer] Can't retrieve custom track {reference.Reference} metadata");
+                                Debug.Log(
+                                    $"[CybergrindMusicExplorer] Can't retrieve custom track {reference.Reference} metadata");
                                 Destroy(btn);
                             }
                         }

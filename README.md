@@ -24,14 +24,8 @@ placed in one directory.
    is located, find **ULTRAKILL** in your Steam Library > Right mouse click > **Properties** > **Local files** > *
    *Browse**
 3. Download the CybergrindMusicExplorer
-   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.1.0/CybergrindMusicExplorer.v1.1.0.zip), then
+   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.2.0/CybergrindMusicExplorer.v1.2.0.zip), then
    extract its contents at **ULTRAKILL/BepInEx/plugins** (create *plugins* folder manually in case it's missing)
-   
-## Additional features
-The mod also supports custom track normalization: you don't have to worry your custom track is going to be too quiet or to loud.
-All the currently available tweakable options are available in ULTRAKILL Audio options.
-
-![tweak](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/3edf177c-e022-40a1-bd1b-d88d46087208)
 
 ## Using the mod
 
@@ -40,10 +34,20 @@ All the currently available tweakable options are available in ULTRAKILL Audio o
 2. Launch the game and go to the blue Cyber Grind settings terminal
 3. **Music** section of the terminal should now contain two folders for original score and your own tracks
 4. Fill the playlist the way you want and enjoy
+5. Optional: Music Explorer settings menu is available by pressing F4 (by default). 
+
+## Additional features
+- Normalization: you don't have to worry your custom track is going to be too quiet or to loud.
+- Custom track boost: if your track is still too quiet, you can always add up to 10dB to it. Please use it carefully.
+- Next track hotkey: Skip the track you're not in the mood to listen to.
+- All these feature are available in Cybergrind by pressing F4.
+
+![120](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/209de4f1-09ac-4397-9480-c00969eba3a7)
+
 
 ## Known issues
 
-Please note that this mod is in its early stage of developement and contains a plenty of issues. These are some I'm
+Please note that this mod is in its early stage of development and contains a plenty of issues. These are some I'm
 aware of and will try to get rid of in the next releases:
 
 - Lack of subfolders support: please place all your custom tracks at the *ULTRAKILL/Cybergrind/Music*, do not create

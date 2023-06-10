@@ -6,15 +6,13 @@ using CybergrindMusicExplorer.Util;
 using UnityEngine;
 using UnityEngine.UI;
 using static CybergrindMusicExplorer.Util.ReflectionUtils;
-using Random = System.Random;
 
 namespace CybergrindMusicExplorer.Components
 {
     public class EnhancedMusicPlayer : MonoBehaviour
     {
-        private readonly CybergrindMusicExplorerManager musicExplorerManager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
-        private readonly MusicManager musicManager = MonoSingleton<MusicManager>.Instance;
-        
+        private CybergrindMusicExplorerManager manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
+
         [SerializeField] private CanvasGroup panelGroup;
         [SerializeField] private Text panelText;
         [SerializeField] private Image panelIcon;
@@ -24,6 +22,14 @@ namespace CybergrindMusicExplorer.Components
         public float panelApproachTime;
         public float panelStayTime;
         private bool stopped;
+
+        private void Update()
+        {
+            if (manager == null)
+                manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
+            if (Input.GetKeyDown((KeyCode)manager.NextTrackBinding))
+                MonoSingleton<MusicManager>.Instance.targetTheme.Stop();
+        }
 
         private void Awake()
         {
@@ -64,11 +70,11 @@ namespace CybergrindMusicExplorer.Components
 
             panelGroup.alpha = 1f;
 
-            if (musicExplorerManager.ShowCurrentTrackPanelIndefinitely)
+            if (manager.ShowCurrentTrackPanelIndefinitely)
                 yield return new WaitUntil(() => !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying);
             else
                 yield return new WaitForSecondsRealtime(panelStayTime);
-            
+
             time = panelApproachTime;
             while (time > 0.0)
             {
@@ -83,7 +89,8 @@ namespace CybergrindMusicExplorer.Components
         private IEnumerator PlaylistRoutine()
         {
             var musicPlayer = this;
-            var themeNotPlaying = new WaitUntil(() => Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying);
+            var themeNotPlaying = new WaitUntil(() =>
+                Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying);
             Playlist.SongData lastSong = null;
             var first = true;
             var playlist = musicPlayer.playlistEditor.customPlaylist;
@@ -101,6 +108,11 @@ namespace CybergrindMusicExplorer.Components
                 {
                     Playlist.SongData currentSong;
                     musicPlayer.playlistEditor.customPlaylist.GetSongData(reference, out currentSong);
+                    Debug.Log($"[CybergrindMusicExplorer] Now playing ${currentSong.name}");
+
+                    // Only allow boosting for custom tracks
+                    manager.allowMusicBoost = reference.Type == SoundtrackType.External;
+
                     if (lastSong != currentSong)
                         musicPlayer.StartCoroutine(musicPlayer.ShowPanelRoutine(currentSong));
                     if (first)

@@ -2,11 +2,11 @@
 using System.IO;
 using BepInEx;
 using CybergrindMusicExplorer.Components;
-using CybergrindMusicExplorer.Patches;
-using HarmonyLib;
+using CybergrindMusicExplorer.GUI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static CybergrindMusicExplorer.Util.Patching.PatchRequest;
+using static CybergrindMusicExplorer.Patches.Patches;
+using static ControlsOptions;
 
 namespace CybergrindMusicExplorer
 
@@ -15,68 +15,87 @@ namespace CybergrindMusicExplorer
     [BepInPlugin(PluginInfo.GUID, PluginInfo.NAME, PluginInfo.VERSION)]
     public class CybergrindMusicExplorer : BaseUnityPlugin
     {
-        private readonly Harmony _harmony = new Harmony("Flazhik.ULTRAKILL.CybergrindMusicExplorer");
         private static EnhancedMusicPlaylistEditor _editor;
         private EnhancedMusicBrowser _browser;
+        private GameObject cybergrindMusicExplorerSettings;
+        private GUIManager GUIManager;
+        private bool menuMessageIsShown;
+        
+        public static EnhancedMusicPlaylistEditor GetEnhancedPlaylistEditor()
+        {
+            return _editor;
+        }
 
         private void Awake()
         {
             Logger.LogInfo("Initializing Cybergrind Music Explorer");
             StartCoroutine(Startup());
+            AssetsManager.Instance.LoadAssets();
+            AssetsManager.Instance.RegisterPrefabs();
         }
 
         private IEnumerator Startup()
         {
-            SceneManager.sceneLoaded += OnSceneLoaded;
+            SceneManager.sceneLoaded += (scene, mode) => StartCoroutine(OnSceneLoaded(scene, mode));
+            GUIManager.Init();
             UpdateNote();
             yield return null;
         }
 
-        private void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
+        private IEnumerator OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
         {
+            MonoSingleton<CybergrindMusicExplorerManager>.Instance.allowMusicBoost = false;
+
             if (scene != SceneManager.GetActiveScene())
-                return;
-            
+                yield break;
+
             switch (SceneHelper.CurrentScene)
             {
-                case "Main Menu":
-                {
-                    PatchMethod(typeof(OptionsMenuToManager), "Start")
-                        .WithPrefix(typeof(OptionsMenuToManagerPatch), "OptionsMenuToManager_Start_Prefix")
-                        .Using(_harmony)
-                        .Once();
-                    break;
-                }
                 case "Endless":
                 {
                     if (_browser != null)
                         break;
-                    OnCybergrind();
+                    yield return OnCybergrind();
+                    break;
+                }
+                case "Main Menu":
+                {
+                    PatchOnStartOptionsMenu();
+                    PatchOnEnableOptionsMenu();
                     break;
                 }
             }
         }
-        private void OnCybergrind()
+
+        private IEnumerator OnCybergrind()
         {
+            MonoSingleton<CybergrindMusicExplorerManager>.Instance.allowMusicBoost = true;
+            PatchAudioMixer();
+
             EnhancedMusicBrowser.OnInit += OnEnhancedBrowserInit;
             var oldBrowser = FindObjectOfType<CustomMusicSoundtrackBrowser>();
             var musicObject = oldBrowser.transform.gameObject;
             _browser = musicObject.AddComponent<EnhancedMusicBrowser>();
             Destroy(oldBrowser);
+            yield return new WaitForSeconds(2.5f);
+            DisplayMenuMessage();
+        }
+
+        private void DisplayMenuMessage()
+        {
+            var manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
+            if (menuMessageIsShown)
+                return;
+            
+            HudMessageReceiver.Instance.SendHudMessage(
+                $"To open Cybergrind Music Explorer settings now or midgame, press [<color=orange>{GetKeyName((KeyCode)manager.MenuBinding)}</color>]");
+            menuMessageIsShown = true;
         }
 
         private void OnEnhancedBrowserInit()
         {
             _editor = FindObjectOfType<EnhancedMusicPlaylistEditor>();
-            PatchMethod(typeof(CustomMusicPlayer), "OnEnable")
-                .WithPrefix(typeof(CustomMusicPlayerPatch), "CustomMusicPlayer_OnEnable_Prefix")
-                .Using(_harmony)
-                .Once();
-        }
-
-        public static EnhancedMusicPlaylistEditor GetEnhancedPlaylistEditor()
-        {
-            return _editor;
+            PatchMusicPlayer();
         }
 
         private void UpdateNote()

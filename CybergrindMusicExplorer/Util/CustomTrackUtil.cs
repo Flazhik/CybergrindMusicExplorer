@@ -10,11 +10,11 @@ namespace CybergrindMusicExplorer.Util
 {
     public static class CustomTrackUtil
     {
-        
-        public static void Normalize(AudioClip audioClip)  {
+        public static void Normalize(AudioClip audioClip)
+        {
             float[] samples = new float[audioClip.samples * audioClip.channels];
             audioClip.GetData(samples, 0);
-            
+
             var max = samples.Select(Math.Abs).Prepend(float.MinValue).Max();
             for (var i = 0; i < samples.Length; i++) samples[i] /= max;
 
@@ -27,7 +27,7 @@ namespace CybergrindMusicExplorer.Util
             using (var request = UnityWebRequestMultimedia.GetAudioClip(new Uri(path), audioType))
             {
                 yield return request.SendWebRequest();
-                
+
                 if (request.error != null)
                 {
                     Debug.LogError(request.error);
@@ -43,7 +43,7 @@ namespace CybergrindMusicExplorer.Util
                     Debug.LogError($"Cannot parse audioclip {path}");
                     yield break;
                 }
-                
+
                 if (audioClip == null)
                 {
                     Debug.LogError($"Downloaded AudioClip is null, path=[{path}].");
