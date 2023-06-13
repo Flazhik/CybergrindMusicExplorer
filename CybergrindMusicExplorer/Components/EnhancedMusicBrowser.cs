@@ -101,12 +101,7 @@ namespace CybergrindMusicExplorer.Components
 
         private IDirectoryTree<TrackReference> CustomSongsFolder()
         {
-            var files = customSongsDirectory.GetFilesRecursive()
-                .Where(file => AudioTypesByExtension.ContainsKey(file.Extension.ToLower()))
-                .Select((file, i) => new TrackReference(SoundtrackType.External, file.Name))
-                .ToList();
-
-            return Folder("Custom tracks", files);
+            return TraverseFileTree(customSongsDirectory, "Custom tracks");
         }
 
         private void SelectSong(TrackReference reference, SoundtrackSong song)
@@ -205,7 +200,7 @@ namespace CybergrindMusicExplorer.Components
                         if (!fileInfo.Exists)
                         {
                             Debug.LogError(
-                                $"[CybergrindMusicExplorer] Soundtrack file {reference.Reference} {fullPath} doesn't exist, ignoring");
+                                $"[CybergrindMusicExplorer] Soundtrack file {fullPath}{reference.Reference} doesn't exist, ignoring");
                             Destroy(placeholder);
                             yield break;
                         }
@@ -323,6 +318,26 @@ namespace CybergrindMusicExplorer.Components
         private Button ControlButton(string path) => GameObject.Find(BaseCanvasPath + path).GetComponent<Button>();
         private void SetActiveAll(List<GameObject> objects, bool active) => objects.ForEach(o => o.SetActive(active));
 
+        private static IDirectoryTree<TrackReference> TraverseFileTree(IDirectoryTree<FileInfo> tree, string folderName)
+        {
+            var newTree = new FakeDirectoryTree<TrackReference>(
+                folderName,
+                tree.files
+                    .Where(file => AudioTypesByExtension.ContainsKey(file.Extension.ToLower()))
+                    .Select((file, i) => new TrackReference(SoundtrackType.External, file.FullName.Substring(CustomSongsPath.Length + 1))).ToList(),
+                tree.children.Select(TraverseFileTree).ToList()
+            );
+            foreach (var child in newTree.children)
+                child.parent = newTree;
+
+            return newTree;
+        }
+        
+        private static IDirectoryTree<TrackReference> TraverseFileTree(IDirectoryTree<FileInfo> tree)
+        {
+            return TraverseFileTree(tree, tree.name);
+        }
+        
         private void DestroyObsoleteInstance()
         {
             var oldPlaylistEditor = FindObjectOfType<CustomMusicPlaylistEditor>();
