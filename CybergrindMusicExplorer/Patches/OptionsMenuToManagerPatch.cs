@@ -58,7 +58,8 @@ namespace CybergrindMusicExplorer.Patches
 
         private static string GetNote()
         {
-            return $"Please press [<color=orange>{GetKeyName((KeyCode)MonoSingleton<CybergrindMusicExplorerManager>.Instance.MenuBinding)}</color>] in Cybergrind to open CGME options";
+            return
+                $"Please press [<color=orange>{GetKeyName((KeyCode)MonoSingleton<CybergrindMusicExplorerManager>.Instance.MenuBinding)}</color>] in Cybergrind to open CGME options";
         }
     }
 }

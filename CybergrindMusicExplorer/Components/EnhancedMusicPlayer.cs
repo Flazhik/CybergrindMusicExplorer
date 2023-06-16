@@ -90,7 +90,8 @@ namespace CybergrindMusicExplorer.Components
         {
             var musicPlayer = this;
             var themeNotPlaying = new WaitUntil(() =>
-                Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying);
+                Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying &&
+                !musicPlayer.stopped);
             Playlist.SongData lastSong = null;
             var first = true;
             var playlist = musicPlayer.playlistEditor.customPlaylist;

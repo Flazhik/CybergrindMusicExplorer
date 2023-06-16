@@ -20,7 +20,7 @@ namespace CybergrindMusicExplorer
         private GameObject cybergrindMusicExplorerSettings;
         private GUIManager GUIManager;
         private bool menuMessageIsShown;
-        
+
         public static EnhancedMusicPlaylistEditor GetEnhancedPlaylistEditor()
         {
             return _editor;
@@ -45,6 +45,7 @@ namespace CybergrindMusicExplorer
         private IEnumerator OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
         {
             MonoSingleton<CybergrindMusicExplorerManager>.Instance.allowMusicBoost = false;
+            PatchMusicManager();
 
             if (scene != SceneManager.GetActiveScene())
                 yield break;
@@ -71,6 +72,7 @@ namespace CybergrindMusicExplorer
         {
             MonoSingleton<CybergrindMusicExplorerManager>.Instance.allowMusicBoost = true;
             PatchAudioMixer();
+            PatchFinalCyberRank();
 
             EnhancedMusicBrowser.OnInit += OnEnhancedBrowserInit;
             var oldBrowser = FindObjectOfType<CustomMusicSoundtrackBrowser>();
@@ -86,7 +88,7 @@ namespace CybergrindMusicExplorer
             var manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
             if (menuMessageIsShown)
                 return;
-            
+
             HudMessageReceiver.Instance.SendHudMessage(
                 $"To open Cybergrind Music Explorer settings now or midgame, press [<color=orange>{GetKeyName((KeyCode)manager.MenuBinding)}</color>]");
             menuMessageIsShown = true;

@@ -8,7 +8,6 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 using static CybergrindMusicExplorer.Util.ReflectionUtils;
 using static CybergrindMusicExplorer.Util.CustomTrackUtil;
@@ -81,13 +80,13 @@ namespace CybergrindMusicExplorer.Components
         {
             try
             {
-                LoadPlaylist();
+                StartCoroutine(LoadPlaylist());
             }
             catch (JsonReaderException ex)
             {
                 Debug.LogError("Error loading Playlist.json: '" + ex.Message + "'. Recreating file.");
                 File.Delete(PlaylistJsonPath);
-                LoadPlaylist();
+                StartCoroutine(LoadPlaylist());
             }
 
             Select(customPlaylist.selected);
@@ -100,7 +99,7 @@ namespace CybergrindMusicExplorer.Components
 
         public void SavePlaylist() => File.WriteAllText(PlaylistJsonPath, JsonConvert.SerializeObject(customPlaylist));
 
-        public void LoadPlaylist()
+        public IEnumerator LoadPlaylist()
         {
             Debug.Log("[CybergrindMusicExplorer] Loading Playlist");
             CustomPlaylist loadedPlaylist;
@@ -153,8 +152,10 @@ namespace CybergrindMusicExplorer.Components
                                 break;
                             }
 
+                            AudioClip audioClip = null;
                             var metadata = CustomTrackMetadata.From(TagLib.File.Create(fileInfo.FullName));
-                            var audioClip = LoadCustomSong(fileInfo);
+                            yield return LoadCustomSong(fileInfo.FullName, AudioTypesByExtension[fileInfo.Extension],
+                                clip => audioClip = clip);
 
                             if (musicExplorerManager.NormalizeSoundtrack)
                                 Normalize(audioClip);
@@ -234,6 +235,7 @@ namespace CybergrindMusicExplorer.Components
         {
             customPlaylist.loopMode = mode;
             loopModeImage.sprite = customPlaylist.loopMode == Playlist.LoopMode.Loop ? loopSprite : loopOnceSprite;
+            SavePlaylist();
         }
 
         public void ToggleShuffle() => SetShuffle(!customPlaylist.shuffled);
@@ -242,6 +244,7 @@ namespace CybergrindMusicExplorer.Components
         {
             customPlaylist.shuffled = shuffle;
             shuffleImage.color = shuffle ? Color.white : Color.gray;
+            SavePlaylist();
         }
 
         private void Select(int newIndex, bool rebuild = true)
@@ -368,21 +371,6 @@ namespace CybergrindMusicExplorer.Components
             buttons.Clear();
             LayoutRebuilder.ForceRebuildLayoutImmediate(itemParent as RectTransform);
             base.Rebuild(setToPageZero);
-        }
-
-        private static AudioClip LoadCustomSong(FileInfo fileInfo)
-        {
-            using (var uwr = UnityWebRequestMultimedia.GetAudioClip(new Uri(fileInfo.FullName), AudioType.MPEG))
-            {
-                var request = uwr.SendWebRequest();
-
-                // Fucking genius sync await. Re-do this shit.
-                while (!request.isDone)
-                {
-                }
-
-                return DownloadHandlerAudioClip.GetContent(uwr);
-            }
         }
     }
 }

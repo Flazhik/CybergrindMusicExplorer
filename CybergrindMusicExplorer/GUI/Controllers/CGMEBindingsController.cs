@@ -18,7 +18,7 @@ namespace CybergrindMusicExplorer.GUI.Controllers
         public void Awake()
         {
             manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
-            
+
             nextTrack = transform
                 .Find("CGMENextTrack")
                 .Find("CGMENextTrack");
@@ -68,7 +68,8 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                 if (manager == null)
                     manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
                 currentKey.GetComponentInChildren<Text>().text = GetKeyName(keyCode);
-                MonoSingleton<CybergrindMusicExplorerManager>.Instance.SetIntLocal("cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
+                MonoSingleton<CybergrindMusicExplorerManager>.Instance.SetIntLocal(
+                    "cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
                 currentKey.GetComponent<Image>().color = NormalColor;
                 currentKey = null;
             }
@@ -86,7 +87,8 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                     manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
                 manager.SetIntLocal("cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
                 currentKey.GetComponentInChildren<Text>().text = GetKeyName(keyCode);
-                MonoSingleton<CybergrindMusicExplorerManager>.Instance.SetIntLocal("cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
+                MonoSingleton<CybergrindMusicExplorerManager>.Instance.SetIntLocal(
+                    "cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
 
                 currentKey.GetComponent<Image>().color = NormalColor;
                 currentKey = null;
@@ -99,7 +101,8 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                 if (Input.GetKey(KeyCode.RightShift))
                     keyCode = KeyCode.RightShift;
                 currentKey.GetComponentInChildren<Text>().text = GetKeyName(keyCode);
-                MonoSingleton<CybergrindMusicExplorerManager>.Instance.SetIntLocal("cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
+                MonoSingleton<CybergrindMusicExplorerManager>.Instance.SetIntLocal(
+                    "cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
 
                 currentKey.GetComponent<Image>().color = NormalColor;
                 currentKey = null;

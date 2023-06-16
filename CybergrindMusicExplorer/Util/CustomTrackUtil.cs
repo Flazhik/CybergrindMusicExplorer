@@ -10,24 +10,35 @@ namespace CybergrindMusicExplorer.Util
 {
     public static class CustomTrackUtil
     {
+        public static readonly Dictionary<string, AudioType> AudioTypesByExtension = new Dictionary<string, AudioType>
+        {
+            { ".mp3", AudioType.MPEG },
+            { ".wav", AudioType.WAV },
+            { ".ogg", AudioType.OGGVORBIS }
+        };
+
+        // Alas, normalization has to go for now
         public static void Normalize(AudioClip audioClip)
         {
-            float[] samples = new float[audioClip.samples * audioClip.channels];
+            /*float[] samples = new float[audioClip.samples * audioClip.channels];
             audioClip.GetData(samples, 0);
 
             var max = samples.Select(Math.Abs).Prepend(float.MinValue).Max();
             for (var i = 0; i < samples.Length; i++) samples[i] /= max;
 
-            audioClip.SetData(samples, 0);
+            audioClip.SetData(samples, 0);*/
         }
 
         public static IEnumerator LoadCustomSong(string path, AudioType audioType, Action<AudioClip> callback)
         {
             AudioClip audioClip = null;
-            using (var request = UnityWebRequestMultimedia.GetAudioClip(new Uri(path), audioType))
+            using (var request = UnityWebRequestMultimedia.GetAudioClip("file:///"  + UnityWebRequest.EscapeURL(path), audioType))
             {
+                ((DownloadHandlerAudioClip)request.downloadHandler).streamAudio = true;
                 yield return request.SendWebRequest();
 
+                while (request.downloadedBytes < 1024)
+                    yield return null;
                 if (request.error != null)
                 {
                     Debug.LogError(request.error);
@@ -36,7 +47,7 @@ namespace CybergrindMusicExplorer.Util
 
                 try
                 {
-                    audioClip = DownloadHandlerAudioClip.GetContent(request);
+                    audioClip = ((DownloadHandlerAudioClip)request.downloadHandler).audioClip;
                 }
                 catch (Exception e)
                 {

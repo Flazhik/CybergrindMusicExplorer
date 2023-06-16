@@ -14,7 +14,7 @@ namespace CybergrindMusicExplorer.Patches
                 .Using(Harmony)
                 .Once();
         }
-                
+
         public static void PatchOnEnableOptionsMenu()
         {
             PatchMethod(typeof(OptionsMenuToManager), "OpenOptions")
@@ -35,6 +35,22 @@ namespace CybergrindMusicExplorer.Patches
         {
             PatchMethod(typeof(CustomMusicPlayer), "OnEnable")
                 .WithPrefix(typeof(CustomMusicPlayerPatch), "CustomMusicPlayer_OnEnable_Prefix")
+                .Using(Harmony)
+                .Once();
+        }
+
+        public static void PatchMusicManager()
+        {
+            PatchMethod(typeof(MusicManager), "OnEnable")
+                .WithPrefix(typeof(MusicManagerPatch), "MusicManager_OnEnable_Prefix")
+                .Using(Harmony)
+                .Once();
+        }
+
+        public static void PatchFinalCyberRank()
+        {
+            PatchMethod(typeof(FinalCyberRank), "GameOver")
+                .WithPrefix(typeof(FinalCyberRankPatch), "MusicManager_GameOver_Prefix")
                 .Using(Harmony)
                 .Once();
         }

@@ -24,7 +24,9 @@ namespace CybergrindMusicExplorer
             set => prefsManager.SetFloatLocal("cyberGrind.musicExplorer.customTracksVolumeBoost", value);
         }
 
-        public int NextTrackBinding => prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMENextTrack", 284);
+        public int NextTrackBinding =>
+            prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMENextTrack", 284);
+
         public int MenuBinding => prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMEMenu", 285);
 
         public void SetIntLocal(string key, int content)

@@ -1,4 +1,3 @@
-using System;
 using CybergrindMusicExplorer.GUI.Controllers;
 using UnityEngine;
 using UnityEngine.UI;
@@ -76,7 +75,7 @@ namespace CybergrindMusicExplorer.GUI
         private void BindControls()
         {
             closeButton.onClick.AddListener(Close);
-            normalizationToggle.isOn =
+            /*normalizationToggle.isOn =
                 MonoSingleton<CybergrindMusicExplorerManager>.Instance.NormalizeSoundtrack;
             normalizationToggle.onValueChanged.AddListener(state =>
             {
@@ -84,7 +83,7 @@ namespace CybergrindMusicExplorer.GUI
                 var onOffText = state ? "on" : "off";
                 HudMessageReceiver.Instance.SendHudMessage(
                     $"Soundtrack normalization will be switched {onOffText} after Cybergrind restart");
-            });
+            });*/
             infinitePanelToggle.isOn =
                 MonoSingleton<CybergrindMusicExplorerManager>.Instance.ShowCurrentTrackPanelIndefinitely;
             infinitePanelToggle.onValueChanged.AddListener(state =>

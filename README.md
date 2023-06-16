@@ -16,10 +16,9 @@ This mod does not affect the folder with original soundtrack, so you can combine
    recommended to choose **BepInEx_x64** release unless you're certain you have a 32-bit system
 
 2. Extract the contents of **BepInEx** archive in your local **ULTRAKILL** folder. If you're not sure where this folder
-   is located, find **ULTRAKILL** in your Steam Library > Right mouse click > **Properties** > **Local files** > *
-   *Browse**
+   is located, find **ULTRAKILL** in your Steam Library > Right mouse click > **Properties** > **Local files** > **Browse**
 3. Download the CybergrindMusicExplorer
-   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.2.1/CybergrindMusicExplorer.v1.2.1.zip), then
+   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.2.2/CybergrindMusicExplorer.v1.2.2.zip), then
    extract its contents at **ULTRAKILL/BepInEx/plugins** (create *plugins* folder manually in case it's missing)
 
 ## Using the mod
@@ -31,14 +30,8 @@ This mod does not affect the folder with original soundtrack, so you can combine
 5. Optional: Music Explorer settings menu is available by pressing F4 (by default)
 
 ## Additional features
-- Normalization: you don't have to worry your custom track is going to be too quiet or to loud
 - Custom track boost: if your track is still too quiet, you can always add up to 10dB to it. Please use it carefully
 - Next track hotkey: Skip the track you're not in the mood to listen to
 - All these feature are available in Cybergrind by pressing F4
 
 ![120](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/209de4f1-09ac-4397-9480-c00969eba3a7)
-
-
-## Known issues
-
-Cybergrind Music Explorer may lag while dealing with large playlists during Cybergrind opening.

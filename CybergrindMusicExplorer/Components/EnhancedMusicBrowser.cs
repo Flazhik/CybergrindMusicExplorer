@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CybergrindMusicExplorer.Data;
-using HarmonyLib;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
@@ -324,7 +323,8 @@ namespace CybergrindMusicExplorer.Components
                 folderName,
                 tree.files
                     .Where(file => AudioTypesByExtension.ContainsKey(file.Extension.ToLower()))
-                    .Select((file, i) => new TrackReference(SoundtrackType.External, file.FullName.Substring(CustomSongsPath.Length + 1))).ToList(),
+                    .Select((file, i) => new TrackReference(SoundtrackType.External,
+                        file.FullName.Substring(CustomSongsPath.Length + 1))).ToList(),
                 tree.children.Select(TraverseFileTree).ToList()
             );
             foreach (var child in newTree.children)
@@ -332,12 +332,10 @@ namespace CybergrindMusicExplorer.Components
 
             return newTree;
         }
-        
-        private static IDirectoryTree<TrackReference> TraverseFileTree(IDirectoryTree<FileInfo> tree)
-        {
-            return TraverseFileTree(tree, tree.name);
-        }
-        
+
+        private static IDirectoryTree<TrackReference> TraverseFileTree(IDirectoryTree<FileInfo> tree) =>
+            TraverseFileTree(tree, tree.name);
+
         private void DestroyObsoleteInstance()
         {
             var oldPlaylistEditor = FindObjectOfType<CustomMusicPlaylistEditor>();
