@@ -10,6 +10,12 @@ Custom music in Cyber Grind playlist is an upcoming feature of ULTRAKILL, so you
 are officially supported.
 This mod does not affect the folder with original soundtrack, so you can combine it with your custom tracks.
 
+### Important!
+Versions <= 1.2.2 allow you to bind **Menu** to left mouse button, essentially softlocking gameplay.
+If you encountered this issue, open **ULTRAKILL\Preferences\LocalPrefs.json**, find a string **cyberGrind.musicExplorer.keyBinding.CGMEMenu**  and change the value  after colon to 285, it will reset the binding to F4.
+
+Thanks Elarrla and Defti for reporting.
+
 ## Installation
 
 1. Download the freshest **BepInEx** release from [here](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.21). It's
