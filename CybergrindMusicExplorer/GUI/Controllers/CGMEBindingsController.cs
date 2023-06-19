@@ -39,7 +39,7 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                 return;
 
             var current = Event.current;
-            if (current.keyCode == KeyCode.Escape)
+            if (current.keyCode == KeyCode.Escape || Input.GetKey(KeyCode.Mouse0))
             {
                 currentKey.GetComponent<Image>().color = NormalColor;
                 currentKey = null;
