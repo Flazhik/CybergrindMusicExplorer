@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using static ControlsOptions;
@@ -18,7 +19,10 @@ namespace CybergrindMusicExplorer.GUI.Controllers
         public void Awake()
         {
             manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
-
+            
+            if (manager.MenuBinding == (int)KeyCode.Mouse0)
+                manager.SetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMEMenu", 285);
+            
             nextTrack = transform
                 .Find("CGMENextTrack")
                 .Find("CGMENextTrack");
@@ -30,6 +34,11 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                 .Find("CGMEMenu");
             optionsMenu.GetComponent<Button>().onClick.AddListener(() => ChangeKey(optionsMenu.gameObject));
             optionsMenu.Find("Text").GetComponent<Text>().text = GetKeyName((KeyCode)manager.MenuBinding);
+
+            transform
+                .Find("Special naming info")
+                .gameObject
+                .AddComponent<HudOpenEffect>();
         }
 
         // That's a dirty copy, bind I'm not going to cut ControlsOptions open

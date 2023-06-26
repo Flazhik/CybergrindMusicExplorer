@@ -19,6 +19,7 @@ namespace CybergrindMusicExplorer
         private EnhancedMusicBrowser _browser;
         private GameObject cybergrindMusicExplorerSettings;
         private GUIManager GUIManager;
+        private CybergrindEffectsChanger cybergrindEffectsChanger;
         private bool menuMessageIsShown;
 
         public static EnhancedMusicPlaylistEditor GetEnhancedPlaylistEditor()
@@ -38,6 +39,7 @@ namespace CybergrindMusicExplorer
         {
             SceneManager.sceneLoaded += (scene, mode) => StartCoroutine(OnSceneLoaded(scene, mode));
             GUIManager.Init();
+            cybergrindEffectsChanger = CybergrindEffectsChanger.Instance;
             UpdateNote();
             yield return null;
         }

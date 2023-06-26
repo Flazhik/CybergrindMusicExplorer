@@ -10,48 +10,37 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using static CybergrindMusicExplorer.Util.ReflectionUtils;
-using static CybergrindMusicExplorer.Util.CustomTrackUtil;
+using static CybergrindMusicExplorer.Util.PathsUtil;
 using Object = UnityEngine.Object;
 
 namespace CybergrindMusicExplorer.Components
 {
     public class EnhancedMusicPlaylistEditor : DirectoryTreeBrowser<TrackReference>
     {
-        private static readonly string UltrakillPath =
-            Directory.GetParent(Application.dataPath)?.FullName ?? FallbackUltrakillPath;
+        public const string PanelCanvasPath = "/FirstRoom/Room/CyberGrindSettings/Canvas/Playlist/";
+        
+        private readonly Dictionary<Transform, Coroutine> changeAnchorRoutines = new Dictionary<Transform, Coroutine>();
+        private readonly List<Transform> buttons = new List<Transform>();
 
-        private const string FallbackUltrakillPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\ULTRAKILL";
-        private const string PanelCanvasPath = "/FirstRoom/Room/CyberGrindSettings/Canvas/Playlist/";
+        public readonly CustomPlaylist Playlist = new CustomPlaylist();
+        private EnhancedMusicBrowser browser;
+        private TracksLoader tracksLoader;
 
-        private static readonly string PlaylistJsonPath =
-            Path.Combine(UltrakillPath, "Preferences", "EnhancedPlaylist.json");
-
-        private static readonly string CustomSongsPath = Path.Combine(UltrakillPath, "CyberGrind", "Music");
-
-        private readonly CybergrindMusicExplorerManager musicExplorerManager =
-            MonoSingleton<CybergrindMusicExplorerManager>.Instance;
-
-        [SerializeField] private EnhancedMusicBrowser browser;
-        [SerializeField] private Sprite defaultIcon;
-        [SerializeField] private Sprite loopSprite;
-        [SerializeField] private Sprite loopOnceSprite;
-
-        [Header("UI Elements")] [SerializeField]
         private Image loopModeImage;
+        private Sprite defaultIcon;
+        private Sprite loopSprite;
+        private Sprite loopOnceSprite;
 
-        [SerializeField] private Image shuffleImage;
-        [SerializeField] private RectTransform selectedControls;
-        [SerializeField] private List<Transform> anchors;
-        public CustomPlaylist customPlaylist = new CustomPlaylist();
-        private Dictionary<Transform, Coroutine> changeAnchorRoutines = new Dictionary<Transform, Coroutine>();
-        private List<Transform> buttons = new List<Transform>();
+        private Image shuffleImage;
+        private RectTransform selectedControls;
+        private List<Transform> anchors;
 
         protected override int maxPageLength => 4;
 
         protected override IDirectoryTree<TrackReference> baseDirectory =>
-            new FakeDirectoryTree<TrackReference>("Songs", customPlaylist.References);
+            new FakeDirectoryTree<TrackReference>("Songs", Playlist.References);
 
-        private CustomContentButton currentButton => buttons.ElementAtOrDefault(customPlaylist.selected % maxPageLength)
+        private CustomContentButton CurrentButton => buttons.ElementAtOrDefault(Playlist.selected % maxPageLength)
             ?.GetComponent<CustomContentButton>();
 
         private void Awake()
@@ -60,10 +49,17 @@ namespace CybergrindMusicExplorer.Components
             CloneObsoleteInstance(
                 FindObjectOfType<CustomMusicPlaylistEditor>(),
                 this,
-                privateFieldsToCopy: new List<string> { "plusButton", "backButton", "pageText", "cleanupActions" },
-                fieldsToIgnore: new List<string> { "browser" });
+                privateFieldsToCopy: new List<string>
+                {
+                    "plusButton", "backButton", "pageText", "cleanupActions"
+                },
+                fieldsToIgnore: new List<string>
+                {
+                    "browser"
+                });
 
             browser = FindObjectOfType<EnhancedMusicBrowser>();
+            tracksLoader = new TracksLoader(defaultIcon);
 
             RewireButtonTo(ControlButton("Panel/NextButton"), NextPage);
             RewireButtonTo(ControlButton("Panel/PreviousButton"), PreviousPage);
@@ -89,17 +85,17 @@ namespace CybergrindMusicExplorer.Components
                 StartCoroutine(LoadPlaylist());
             }
 
-            Select(customPlaylist.selected);
-            SetLoopMode(customPlaylist.loopMode);
-            SetShuffle(customPlaylist.shuffled);
-            customPlaylist.Changed += SavePlaylist;
+            Select(Playlist.selected);
+            SetLoopMode(Playlist.loopMode);
+            SetShuffle(Playlist.shuffled);
+            Playlist.Changed += SavePlaylist;
         }
 
-        private void OnDestroy() => customPlaylist.Changed -= SavePlaylist;
+        private void OnDestroy() => Playlist.Changed -= SavePlaylist;
 
-        public void SavePlaylist() => File.WriteAllText(PlaylistJsonPath, JsonConvert.SerializeObject(customPlaylist));
+        public void SavePlaylist() => File.WriteAllText(PlaylistJsonPath, JsonConvert.SerializeObject(Playlist));
 
-        public IEnumerator LoadPlaylist()
+        private IEnumerator LoadPlaylist()
         {
             Debug.Log("[CybergrindMusicExplorer] Loading Playlist");
             CustomPlaylist loadedPlaylist;
@@ -107,14 +103,14 @@ namespace CybergrindMusicExplorer.Components
             using (var streamReader = new StreamReader(File.Open(PlaylistJsonPath, FileMode.OpenOrCreate)))
                 loadedPlaylist = JsonConvert.DeserializeObject<CustomPlaylist>(streamReader.ReadToEnd());
 
-            if (loadedPlaylist == null || loadedPlaylist.References == null || loadedPlaylist.References.Count == 0)
+            if (loadedPlaylist?.References == null || loadedPlaylist.References.Count == 0)
             {
                 Debug.Log("[CybergrindMusicExplorer] No saved playlist found. Creating default...");
                 foreach (var referenceSoundtrackSong in browser.rootFolder)
                 {
                     var handle = referenceSoundtrackSong.LoadAssetAsync();
                     var song = handle.WaitForCompletion();
-                    customPlaylist.AddTrack(new TrackReference(SoundtrackType.Asset, referenceSoundtrackSong.AssetGUID),
+                    Playlist.AddTrack(new TrackReference(SoundtrackType.Asset, referenceSoundtrackSong.AssetGUID),
                         song);
                     Addressables.Release(handle);
                 }
@@ -122,9 +118,9 @@ namespace CybergrindMusicExplorer.Components
             else
             {
                 Debug.Log("[CybergrindMusicExplorer] Playlist exists");
-                customPlaylist.loopMode = loadedPlaylist.loopMode;
-                customPlaylist.selected = loadedPlaylist.selected;
-                customPlaylist.shuffled = loadedPlaylist.shuffled;
+                Playlist.loopMode = loadedPlaylist.loopMode;
+                Playlist.selected = loadedPlaylist.selected;
+                Playlist.shuffled = loadedPlaylist.shuffled;
 
                 var outdatedTracks = new List<TrackReference>();
                 foreach (var reference in loadedPlaylist.References)
@@ -136,7 +132,7 @@ namespace CybergrindMusicExplorer.Components
                         {
                             var handle = new AssetReferenceSoundtrackSong(reference.Reference).LoadAssetAsync();
                             handle.WaitForCompletion();
-                            customPlaylist.AddTrack(reference, handle.Result);
+                            Playlist.AddTrack(reference, handle.Result);
                             Addressables.Release(handle);
                             Debug.Log($"[CybergrindMusicExplorer] Loaded soundtrack id={reference.Reference}");
                             break;
@@ -144,7 +140,10 @@ namespace CybergrindMusicExplorer.Components
                         case SoundtrackType.External:
                         {
                             var fileInfo = new FileInfo(Path.Combine(CustomSongsPath, reference.Reference));
-                            if (!fileInfo.Exists)
+                            Playlist.SongData songData = null;
+                            yield return tracksLoader.LoadSongData(fileInfo, data => songData = data);
+
+                            if (songData == null)
                             {
                                 Debug.LogWarning(
                                     $"[CybergrindMusicExplorer] Track file {reference.Reference} doesn't exist, it will be removed.");
@@ -152,19 +151,7 @@ namespace CybergrindMusicExplorer.Components
                                 break;
                             }
 
-                            AudioClip audioClip = null;
-                            var metadata = CustomTrackMetadata.From(TagLib.File.Create(fileInfo.FullName));
-                            yield return LoadCustomSong(fileInfo.FullName, AudioTypesByExtension[fileInfo.Extension],
-                                clip => audioClip = clip);
-
-                            if (musicExplorerManager.NormalizeSoundtrack)
-                                Normalize(audioClip);
-
-                            customPlaylist.AddTrack(reference,
-                                SongDataFromCustomAudioClip(audioClip,
-                                    metadata.Title ?? Path.GetFileNameWithoutExtension(fileInfo.Name), metadata.Artist,
-                                    metadata.Logo ? metadata.Logo : defaultIcon));
-                            Debug.Log($"[CybergrindMusicExplorer] Loaded custom music file={reference.Reference}");
+                            Playlist.AddTrack(reference, songData);
                             break;
                         }
                         default:
@@ -191,35 +178,36 @@ namespace CybergrindMusicExplorer.Components
 
         public void Remove()
         {
-            customPlaylist.Remove(customPlaylist.selected);
-            if (customPlaylist.selected >= customPlaylist.Count)
-                Select(customPlaylist.Count - 1);
+            Playlist.Remove(Playlist.selected);
+            if (Playlist.selected >= Playlist.Count)
+                Select(Playlist.Count - 1);
 
             Rebuild(false);
         }
 
         public void Move(int amount)
         {
-            int index1 = customPlaylist.selected % maxPageLength;
-            int index2 = index1 + amount;
-            bool flag = PageOf(customPlaylist.selected) == PageOf(customPlaylist.selected + amount);
-            if (customPlaylist.selected + amount < 0 || customPlaylist.selected + amount >= customPlaylist.Count)
+            var index1 = Playlist.selected % maxPageLength;
+            var index2 = index1 + amount;
+            var flag = PageOf(Playlist.selected) == PageOf(Playlist.selected + amount);
+            if (Playlist.selected + amount < 0 || Playlist.selected + amount >= Playlist.Count)
                 return;
-            customPlaylist.Swap(customPlaylist.selected, customPlaylist.selected + amount);
+
+            Playlist.Swap(Playlist.selected, Playlist.selected + amount);
             if (flag)
             {
                 ChangeAnchorOf(buttons[index1], anchors[index2]);
                 ChangeAnchorOf(selectedControls, anchors[index2]);
                 ChangeAnchorOf(buttons[index2], anchors[index1]);
-                CustomContentButton cb = currentButton;
+                var cb = CurrentButton;
                 buttons.RemoveAt(index1);
                 buttons.Insert(index2, cb.transform);
-                Select(customPlaylist.selected + amount, false);
+                Select(Playlist.selected + amount, false);
             }
             else
             {
                 selectedControls.gameObject.SetActive(false);
-                Select(customPlaylist.selected + amount);
+                Select(Playlist.selected + amount);
             }
         }
 
@@ -227,47 +215,52 @@ namespace CybergrindMusicExplorer.Components
 
         public void MoveDown() => Move(1);
 
-        public void ToggleLoopMode() => SetLoopMode(customPlaylist.loopMode == Playlist.LoopMode.Loop
-            ? Playlist.LoopMode.LoopOne
-            : Playlist.LoopMode.Loop);
+        public void ToggleLoopMode() => SetLoopMode(Playlist.loopMode == global::Playlist.LoopMode.Loop
+            ? global::Playlist.LoopMode.LoopOne
+            : global::Playlist.LoopMode.Loop);
 
         private void SetLoopMode(Playlist.LoopMode mode)
         {
-            customPlaylist.loopMode = mode;
-            loopModeImage.sprite = customPlaylist.loopMode == Playlist.LoopMode.Loop ? loopSprite : loopOnceSprite;
+            Playlist.loopMode = mode;
+            loopModeImage.sprite = Playlist.loopMode == global::Playlist.LoopMode.Loop
+                ? loopSprite
+                : loopOnceSprite;
+
             SavePlaylist();
         }
 
-        public void ToggleShuffle() => SetShuffle(!customPlaylist.shuffled);
+        public void ToggleShuffle() => SetShuffle(!Playlist.shuffled);
 
         private void SetShuffle(bool shuffle)
         {
-            customPlaylist.shuffled = shuffle;
+            Playlist.shuffled = shuffle;
             shuffleImage.color = shuffle ? Color.white : Color.gray;
             SavePlaylist();
         }
 
         private void Select(int newIndex, bool rebuild = true)
         {
-            if (newIndex < 0 || newIndex >= customPlaylist.Count)
+            if (newIndex < 0 || newIndex >= Playlist.Count)
             {
                 Debug.LogWarning(
-                    $"Attempted to set current index {newIndex} outside bounds of playlist {customPlaylist.Count}");
+                    $"Attempted to set current index {newIndex} outside bounds of playlist {Playlist.Count}");
             }
             else
             {
-                int num = PageOf(newIndex) == currentPage ? 1 : 0;
-                if ((bool)(Object)currentButton)
-                    currentButton.border.color = Color.white;
-                int selected = customPlaylist.selected;
-                customPlaylist.selected = newIndex;
+                var num = PageOf(newIndex) == currentPage ? 1 : 0;
+                if ((bool)(Object)CurrentButton)
+                    CurrentButton.border.color = Color.white;
+                var selected = Playlist.selected;
+                Playlist.selected = newIndex;
                 if (PageOf(selected) < PageOf(newIndex))
-                    ChangeAnchorOf((Transform)selectedControls, anchors.First(), 0.0f);
+                    ChangeAnchorOf(selectedControls, anchors.First(), 0.0f);
                 else if (PageOf(selected) > PageOf(newIndex))
                     ChangeAnchorOf(selectedControls, anchors.Last(), 0.0f);
-                if ((bool)(Object)currentButton)
-                    currentButton.border.color = Color.green;
-                Transform anchor = anchors[customPlaylist.selected % maxPageLength];
+
+                if ((bool)(Object)CurrentButton)
+                    CurrentButton.border.color = Color.green;
+                var anchor = anchors[Playlist.selected % maxPageLength];
+
                 if (num != 0)
                 {
                     selectedControls.gameObject.SetActive(true);
@@ -281,13 +274,14 @@ namespace CybergrindMusicExplorer.Components
 
                 if (!rebuild)
                     return;
+
                 Rebuild(false);
             }
         }
 
         protected override Action BuildLeaf(TrackReference reference, int currentIndex)
         {
-            if (!customPlaylist.IsSongLoaded(reference))
+            if (!Playlist.IsSongLoaded(reference))
             {
                 Debug.LogWarning("Attempted to load playlist UI while song with ID '" + reference.Reference +
                                  $"', type {reference.Type} has not loaded. Ignoring...");
@@ -295,16 +289,16 @@ namespace CybergrindMusicExplorer.Components
             }
 
             Playlist.SongData data;
-            customPlaylist.GetSongData(reference, out data);
+            Playlist.GetSongData(reference, out data);
 
-            GameObject go = Instantiate(itemButtonTemplate, itemButtonTemplate.transform.parent);
-            CustomContentButton contentButton = go.GetComponent<CustomContentButton>();
+            var go = Instantiate(itemButtonTemplate, itemButtonTemplate.transform.parent);
+            var contentButton = go.GetComponent<CustomContentButton>();
             contentButton.text.text = data.name.ToUpper();
             contentButton.icon.sprite = data.icon != null ? data.icon : defaultIcon;
             go.SetActive(true);
             ChangeAnchorOf(go.transform, anchors[currentIndex], 0.0f);
             buttons.Add(go.transform);
-            if (PageOf(customPlaylist.selected) == currentPage && contentButton == currentButton)
+            if (PageOf(Playlist.selected) == currentPage && contentButton == CurrentButton)
             {
                 contentButton.border.color = Color.green;
                 selectedControls.gameObject.SetActive(true);
@@ -334,7 +328,7 @@ namespace CybergrindMusicExplorer.Components
 
             IEnumerator ChangeAnchorOverTime()
             {
-                float t = 0.0f;
+                var t = 0.0f;
                 while (t < (double)time && time > 0.0)
                 {
                     obj.position = Vector3.MoveTowards(obj.position, anchor.position, Time.deltaTime * 2f);
@@ -348,29 +342,27 @@ namespace CybergrindMusicExplorer.Components
             }
         }
 
-        private Button ControlButton(string path)
-        {
-            return GameObject.Find(PanelCanvasPath + path).GetComponent<Button>();
-        }
-
-        private void RewireButtonTo(Button button, UnityAction call)
-        {
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(call);
-        }
-
         public override void Rebuild(bool setToPageZero = true)
         {
-            foreach (KeyValuePair<Transform, Coroutine> changeAnchorRoutine in changeAnchorRoutines)
-            {
-                if (changeAnchorRoutine.Value != null)
-                    StopCoroutine(changeAnchorRoutine.Value);
-            }
+            foreach (var changeAnchorRoutine in changeAnchorRoutines.Where(changeAnchorRoutine =>
+                         changeAnchorRoutine.Value != null))
+                StopCoroutine(changeAnchorRoutine.Value);
 
             changeAnchorRoutines.Clear();
             buttons.Clear();
             LayoutRebuilder.ForceRebuildLayoutImmediate(itemParent as RectTransform);
             base.Rebuild(setToPageZero);
+        }
+
+        private static Button ControlButton(string path)
+        {
+            return GameObject.Find(PanelCanvasPath + path).GetComponent<Button>();
+        }
+
+        private static void RewireButtonTo(Button button, UnityAction call)
+        {
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(call);
         }
     }
 }

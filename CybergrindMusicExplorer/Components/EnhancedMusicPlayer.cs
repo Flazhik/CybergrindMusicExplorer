@@ -6,6 +6,7 @@ using CybergrindMusicExplorer.Util;
 using UnityEngine;
 using UnityEngine.UI;
 using static CybergrindMusicExplorer.Util.ReflectionUtils;
+using SongData = Playlist.SongData;
 
 namespace CybergrindMusicExplorer.Components
 {
@@ -21,14 +22,17 @@ namespace CybergrindMusicExplorer.Components
         [SerializeField] private Sprite defaultIcon;
         public float panelApproachTime;
         public float panelStayTime;
+
         private bool stopped;
+        private bool nextTrack;
 
         private void Update()
         {
             if (manager == null)
                 manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
+            
             if (Input.GetKeyDown((KeyCode)manager.NextTrackBinding))
-                MonoSingleton<MusicManager>.Instance.targetTheme.Stop();
+                nextTrack = true;
         }
 
         private void Awake()
@@ -39,7 +43,6 @@ namespace CybergrindMusicExplorer.Components
                 fieldsToIgnore: new List<string> { "playlistEditor" });
 
             playlistEditor = CybergrindMusicExplorer.GetEnhancedPlaylistEditor();
-
             Destroy(FindObjectOfType<CustomMusicPlayer>());
         }
 
@@ -47,7 +50,7 @@ namespace CybergrindMusicExplorer.Components
 
         public void StartPlaylist()
         {
-            if (playlistEditor.customPlaylist.Count < 1)
+            if (playlistEditor.Playlist.Count < 1)
                 Debug.LogError(
                     "[CybergrindMusicExplorer] No songs in playlist, somehow. Not starting playlist routine...");
             else
@@ -56,7 +59,7 @@ namespace CybergrindMusicExplorer.Components
 
         public void StopPlaylist() => stopped = true;
 
-        private IEnumerator ShowPanelRoutine(Playlist.SongData song)
+        private IEnumerator ShowPanelRoutine(SongData song)
         {
             panelText.text = song.name.ToUpper();
             panelIcon.sprite = song.icon != null ? song.icon : defaultIcon;
@@ -90,25 +93,33 @@ namespace CybergrindMusicExplorer.Components
         {
             var musicPlayer = this;
             var themeNotPlaying = new WaitUntil(() =>
-                Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying &&
-                !musicPlayer.stopped);
-            Playlist.SongData lastSong = null;
+                Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying && !musicPlayer.stopped || nextTrack);
             var first = true;
-            var playlist = musicPlayer.playlistEditor.customPlaylist;
-            var currentOrder = playlist.shuffled
+            var playlist = musicPlayer.playlistEditor.Playlist;
+            
+            SongData lastSong = null;
+
+            var order = playlist.shuffled
                 ? (IEnumerable<TrackReference>)new DeckShuffled<TrackReference>(playlist.References)
                 : playlist.References;
 
             if (playlist.loopMode == Playlist.LoopMode.LoopOne)
-                currentOrder = currentOrder.Skip(playlist.selected).Take(1);
+                order = order.Skip(playlist.selected).Take(1);
+            
             while (!musicPlayer.stopped)
             {
-                if (currentOrder is DeckShuffled<TrackReference> deckShuffled)
+                if (order is DeckShuffled<TrackReference> deckShuffled)
                     deckShuffled.Reshuffle();
-                foreach (var reference in currentOrder)
+                
+                foreach (var reference in order)
                 {
-                    Playlist.SongData currentSong;
-                    musicPlayer.playlistEditor.customPlaylist.GetSongData(reference, out currentSong);
+                    if (nextTrack)
+                    {
+                        nextTrack = false;
+                        continue;
+                    }
+
+                    musicPlayer.playlistEditor.Playlist.GetSongData(reference, out var currentSong);
                     Debug.Log($"[CybergrindMusicExplorer] Now playing ${currentSong.name}");
 
                     // Only allow boosting for custom tracks
@@ -130,7 +141,7 @@ namespace CybergrindMusicExplorer.Components
                     var i = 0;
                     foreach (var clip in currentSong.clips)
                     {
-                        if (musicPlayer.playlistEditor.customPlaylist.loopMode == Playlist.LoopMode.LoopOne ||
+                        if (musicPlayer.playlistEditor.Playlist.loopMode == Playlist.LoopMode.LoopOne ||
                             currentSong.maxClips <= -1 || i < currentSong.maxClips)
                         {
                             musicPlayer.changer.ChangeTo(clip);

@@ -8,8 +8,8 @@ namespace CybergrindMusicExplorer.Patches
     public class FinalCyberRankPatch
     {
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(MusicManager), "GameOver")]
-        public static bool MusicManager_GameOver_Prefix(MusicManager __instance)
+        [HarmonyPatch(typeof(FinalCyberRank), "GameOver")]
+        public static bool FinalCyberRank_GameOver_Prefix()
         {
             var player = (EnhancedMusicPlayer)Object.FindObjectOfType(typeof(EnhancedMusicPlayer));
             if (player != null)

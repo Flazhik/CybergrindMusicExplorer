@@ -50,7 +50,7 @@ namespace CybergrindMusicExplorer.Patches
         public static void PatchFinalCyberRank()
         {
             PatchMethod(typeof(FinalCyberRank), "GameOver")
-                .WithPrefix(typeof(FinalCyberRankPatch), "MusicManager_GameOver_Prefix")
+                .WithPrefix(typeof(FinalCyberRankPatch), "FinalCyberRank_GameOver_Prefix")
                 .Using(Harmony)
                 .Once();
         }

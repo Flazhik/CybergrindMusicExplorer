@@ -5,73 +5,51 @@ using System.IO;
 using System.Linq;
 using CybergrindMusicExplorer.Data;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 using static CybergrindMusicExplorer.Util.ReflectionUtils;
-using static CybergrindMusicExplorer.Util.CustomTrackUtil;
-using File = TagLib.File;
+using static CybergrindMusicExplorer.Util.CustomTracksNamingUtil;
+using static CybergrindMusicExplorer.Util.PathsUtil;
 
 namespace CybergrindMusicExplorer.Components
 {
     public class EnhancedMusicBrowser : DirectoryTreeBrowser<TrackReference>
     {
-        private static readonly string UltrakillPath =
-            Directory.GetParent(Application.dataPath)?.FullName ?? FallbackUltrakillPath;
-
-        private const string FallbackUltrakillPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\ULTRAKILL";
         private const string BaseCanvasPath = "/FirstRoom/Room/CyberGrindSettings/Canvas/SoundtrackMusic/Panel/";
-        private static readonly string CustomSongsPath = Path.Combine(UltrakillPath, "CyberGrind", "Music");
-
-        private static readonly Dictionary<string, AudioType> AudioTypesByExtension = new Dictionary<string, AudioType>
-        {
-            { ".mp3", AudioType.MPEG },
-            { ".wav", AudioType.WAV },
-            { ".ogg", AudioType.OGGVORBIS }
-        };
-
-        private readonly CybergrindMusicExplorerManager musicExplorerManager =
-            MonoSingleton<CybergrindMusicExplorerManager>.Instance;
-
+        
         public static event Action OnInit;
 
-        [Header("References")] [SerializeField]
-        private EnhancedMusicPlaylistEditor playlistEditor;
-
-        [SerializeField] private GameObject playlistEditorPanel;
-        [SerializeField] private CyberGrindSettingsNavigator navigator;
-        [Header("Assets")] [SerializeField] private GameObject loadingPrefab;
-        [SerializeField] private Sprite lockedLevelSprite;
-        [SerializeField] private Sprite defaultIcon;
-
-        [SerializeField]
         public List<AssetReferenceSoundtrackSong> rootFolder = new List<AssetReferenceSoundtrackSong>();
-
         public List<SoundtrackFolder> levelFolders = new List<SoundtrackFolder>();
 
+        private GameObject playlistEditorPanel;
+        private CyberGrindSettingsNavigator navigator;
+        private GameObject loadingPrefab;
+        private Sprite lockedLevelSprite;
+        private Sprite defaultIcon;
+
         private FakeDirectoryTree<TrackReference> _baseDirectory =
-            new FakeDirectoryTree<TrackReference>("", new TrackReference[] { }, null, null);
-
+            new FakeDirectoryTree<TrackReference>("", new TrackReference[] { });
         private FileDirectoryTree customSongsDirectory => new FileDirectoryTree(CustomSongsPath);
-
-        private Dictionary<TrackReference, SoundtrackSong> referenceCache =
-            new Dictionary<TrackReference, SoundtrackSong>();
-
-        private Dictionary<TrackReference, Playlist.SongData> customReferenceCache =
-            new Dictionary<TrackReference, Playlist.SongData>();
-
         protected override int maxPageLength => 4;
-
         protected override IDirectoryTree<TrackReference> baseDirectory => _baseDirectory;
+        
+        private TracksLoader tracksLoader;
+        private EnhancedMusicPlaylistEditor playlistEditor;
 
         private void Awake()
         {
             CloneObsoleteInstance(
                 FindObjectOfType<CustomMusicSoundtrackBrowser>(),
                 this,
-                privateFieldsToCopy: new List<string> { "plusButton", "backButton", "pageText", "cleanupActions" },
-                fieldsToIgnore: new List<string> { "_baseDirectory", "referenceCache" });
+                privateFieldsToCopy: new List<string>
+                {
+                    "plusButton", "backButton", "pageText", "cleanupActions"
+                },
+                fieldsToIgnore: new List<string>
+                {
+                    "_baseDirectory", "referenceCache"
+                });
             DestroyObsoleteInstance();
 
             RewireButtonTo(ControlButton("NextButton"), NextPage);
@@ -79,7 +57,12 @@ namespace CybergrindMusicExplorer.Components
             RewireButtonTo(ControlButton("ImageSelectorWrapper/BackButton"), StepUp);
 
             _baseDirectory = Folder("Songs",
-                children: new List<IDirectoryTree<TrackReference>> { CustomSongsFolder(), OstFolder() });
+                children: new List<IDirectoryTree<TrackReference>>
+                {
+                    CustomSongsFolder(),
+                    OstFolder()
+                });
+            tracksLoader = new TracksLoader(defaultIcon);
 
             // TODO: Not ideal, but will do for now
             SetPrivate(this, typeof(DirectoryTreeBrowser<TrackReference>), "currentDirectory", baseDirectory);
@@ -93,7 +76,7 @@ namespace CybergrindMusicExplorer.Components
             return Folder("OST", children: levelFolders
                 .Select(f => new FakeDirectoryTree<TrackReference>(f.name, f.songs
                     .Select(s => new TrackReference(SoundtrackType.Asset, s.AssetGUID))
-                    .ToList(), null, null))
+                    .ToList()))
                 .Cast<IDirectoryTree<TrackReference>>()
                 .ToList());
         }
@@ -107,8 +90,8 @@ namespace CybergrindMusicExplorer.Components
         {
             if (song.clips.Count > 0)
             {
-                int target = playlistEditor.PageOf(playlistEditor.customPlaylist.Count);
-                playlistEditor.customPlaylist.AddTrack(reference, song);
+                var target = playlistEditor.PageOf(playlistEditor.Playlist.Count);
+                playlistEditor.Playlist.AddTrack(reference, song);
                 playlistEditor.Rebuild(false);
                 playlistEditor.SetPage(target);
                 navigator.GoToNoMenu(playlistEditorPanel);
@@ -121,8 +104,8 @@ namespace CybergrindMusicExplorer.Components
         {
             if (song.clips.Count > 0)
             {
-                int target = playlistEditor.PageOf(playlistEditor.customPlaylist.Count);
-                playlistEditor.customPlaylist.AddTrack(reference, song);
+                var target = playlistEditor.PageOf(playlistEditor.Playlist.Count);
+                playlistEditor.Playlist.AddTrack(reference, song);
                 playlistEditor.Rebuild(false);
                 playlistEditor.SetPage(target);
                 navigator.GoToNoMenu(playlistEditorPanel);
@@ -131,114 +114,34 @@ namespace CybergrindMusicExplorer.Components
                 Debug.LogWarning("Attempted to add song with no clips to playlist.");
         }
 
-        public IEnumerator LoadSongButton(TrackReference reference, GameObject btn)
+        private IEnumerator LoadSongButton(TrackReference reference, GameObject btn)
         {
-            GameObject placeholder = Instantiate(loadingPrefab, itemParent, false);
+            var placeholder = Instantiate(loadingPrefab, itemParent, false);
             placeholder.SetActive(true);
 
             switch (reference.Type)
             {
                 case SoundtrackType.Asset:
                 {
-                    SoundtrackSong song;
-                    if (referenceCache.ContainsKey(reference))
-                    {
-                        Debug.LogWarning("[CybergrindMusicExplorer] No referenceCache present");
-                        yield return new WaitUntil(() => referenceCache[reference] != null || btn == null);
-                        if (btn == null)
-                        {
-                            Destroy(placeholder);
-                            yield break;
-                        }
+                    SoundtrackSong song = null;
+                    yield return tracksLoader.LoadSongData(reference, data => song = data);
 
-                        song = referenceCache[reference];
-                    }
-                    else
-                    {
-                        AsyncOperationHandle<SoundtrackSong> handle =
-                            new AssetReferenceT<SoundtrackSong>(reference.Reference).LoadAssetAsync();
-                        referenceCache.Add(reference, null);
-                        yield return new WaitUntil(() => handle.IsDone || btn == null);
-                        if (btn == null)
-                        {
-                            Destroy(placeholder);
-                            yield return handle;
-                        }
-
-                        song = handle.Result;
-                        referenceCache[reference] = song;
-                        Addressables.Release(handle);
-                        if (btn == null)
-                            yield break;
-                    }
+                    if (btn == null)
+                        yield break;
 
                     Destroy(placeholder);
-                    DrawOstButton(song, reference, btn);
+                    if (song != null)
+                        DrawOstButton(song, reference, btn);
+
                     break;
                 }
                 case SoundtrackType.External:
                 {
                     Playlist.SongData song = null;
-                    if (customReferenceCache.ContainsKey(reference))
-                    {
-                        Debug.LogWarning("[CybergrindMusicExplorer] No referenceCache present");
-                        yield return new WaitUntil(() => customReferenceCache[reference] != null || btn == null);
-                        if (btn == null)
-                        {
-                            Destroy(placeholder);
-                            yield break;
-                        }
-
-                        song = customReferenceCache[reference];
-                    }
-                    else
-                    {
-                        var fileInfo = new FileInfo(Path.Combine(CustomSongsPath, reference.Reference));
-                        var fullPath = fileInfo.FullName;
-
-                        if (!fileInfo.Exists)
-                        {
-                            Debug.LogError(
-                                $"[CybergrindMusicExplorer] Soundtrack file {fullPath}{reference.Reference} doesn't exist, ignoring");
-                            Destroy(placeholder);
-                            yield break;
-                        }
-
-                        AudioClip audioClip = null;
-
-                        yield return StartCoroutine(LoadCustomSong(fullPath, AudioTypesByExtension[fileInfo.Extension],
-                            clip => audioClip = clip));
-
-                        if (btn == null)
-                            Destroy(placeholder);
-
-                        if (audioClip != null)
-                        {
-                            try
-                            {
-                                var metadata = CustomTrackMetadata.From(File.Create(fileInfo.FullName));
-                                song = SongDataFromCustomAudioClip(audioClip,
-                                    metadata.Title ?? Path.GetFileNameWithoutExtension(fileInfo.Name), metadata.Artist,
-                                    metadata.Logo ? metadata.Logo : defaultIcon);
-
-                                if (musicExplorerManager.NormalizeSoundtrack)
-                                    Normalize(audioClip);
-
-                                customReferenceCache[reference] = song;
-                            }
-                            catch (Exception e)
-                            {
-                                Debug.Log(
-                                    $"[CybergrindMusicExplorer] Can't retrieve custom track {reference.Reference} metadata");
-                                Destroy(btn);
-                            }
-                        }
-
-                        if (btn == null)
-                            yield break;
-                    }
-
+                    var fileInfo = new FileInfo(Path.Combine(CustomSongsPath, reference.Reference));
+                    yield return tracksLoader.LoadSongData(fileInfo, data => song = data);
                     Destroy(placeholder);
+
                     if (song != null)
                         DrawCustomTrackButton(song, reference, btn);
                     break;
@@ -252,7 +155,7 @@ namespace CybergrindMusicExplorer.Components
 
         public void DrawOstButton(SoundtrackSong song, TrackReference reference, GameObject button)
         {
-            CustomContentButton componentInChildren = button.GetComponentInChildren<CustomContentButton>();
+            var componentInChildren = button.GetComponentInChildren<CustomContentButton>();
             componentInChildren.button.onClick.RemoveAllListeners();
             if (song.conditions.AllMet())
             {
@@ -279,7 +182,7 @@ namespace CybergrindMusicExplorer.Components
 
         public void DrawCustomTrackButton(Playlist.SongData song, TrackReference reference, GameObject button)
         {
-            CustomContentButton componentInChildren = button.GetComponentInChildren<CustomContentButton>();
+            var componentInChildren = button.GetComponentInChildren<CustomContentButton>();
             componentInChildren.button.onClick.RemoveAllListeners();
 
             componentInChildren.icon.sprite = song.icon != null ? song.icon : defaultIcon;
@@ -292,7 +195,7 @@ namespace CybergrindMusicExplorer.Components
 
         protected override Action BuildDirectory(IDirectoryTree<TrackReference> folder, int indexInPage)
         {
-            GameObject btn = Instantiate(folderButtonTemplate, itemParent, false);
+            var btn = Instantiate(folderButtonTemplate, itemParent, false);
             btn.GetComponent<Button>().onClick.RemoveAllListeners();
             btn.GetComponent<Button>().onClick.AddListener(() => StepDown(folder));
             btn.GetComponentInChildren<Text>().text = folder.name.ToUpper();
@@ -302,30 +205,44 @@ namespace CybergrindMusicExplorer.Components
 
         protected override Action BuildLeaf(TrackReference reference, int indexInPage)
         {
-            GameObject btn = Instantiate(itemButtonTemplate, itemParent, false);
+            var btn = Instantiate(itemButtonTemplate, itemParent, false);
             StartCoroutine(LoadSongButton(reference, btn));
             return () => Destroy(btn);
         }
 
-
-        private void RewireButtonTo(Button button, UnityAction call)
+        private IDirectoryTree<TrackReference> TraverseFileTree(IDirectoryTree<FileInfo> tree, string folderName)
         {
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(call);
-        }
+            var children = tree.children
+                .Where(child => child.name != SpecialEffectsPath.Name)
+                .ToList();
+            
+            var tracks = tree.files
+                .Where(file => AudioTypesByExtension.ContainsKey(file.Extension.ToLower()))
+                .ToList();
 
-        private Button ControlButton(string path) => GameObject.Find(BaseCanvasPath + path).GetComponent<Button>();
-        private void SetActiveAll(List<GameObject> objects, bool active) => objects.ForEach(o => o.SetActive(active));
+            var segmentedTracks = tracks
+                .Where(HasSpecialPostfix)
+                .GroupBy(file => WithoutPostfix(file).FullName)
+                .Where(HasIntroAndLoop)
+                .ToList();
 
-        private static IDirectoryTree<TrackReference> TraverseFileTree(IDirectoryTree<FileInfo> tree, string folderName)
-        {
+            var regularTracks = tracks
+                .Select(track => track.FullName)
+                .Where(track => !segmentedTracks
+                    .SelectMany(t => t)
+                    .Select(t => t.FullName)
+                    .Contains(track))
+                .ToList();
+
             var newTree = new FakeDirectoryTree<TrackReference>(
                 folderName,
-                tree.files
-                    .Where(file => AudioTypesByExtension.ContainsKey(file.Extension.ToLower()))
-                    .Select((file, i) => new TrackReference(SoundtrackType.External,
-                        file.FullName.Substring(CustomSongsPath.Length + 1))).ToList(),
-                tree.children.Select(TraverseFileTree).ToList()
+                segmentedTracks
+                    .Select(group => group.Key)
+                    .Concat(regularTracks)
+                    .Select(track => new TrackReference(SoundtrackType.External,
+                        track.Substring(CustomSongsPath.Length + 1)))
+                    .ToList(),
+                children.Select(TraverseFileTree).ToList()
             );
             foreach (var child in newTree.children)
                 child.parent = newTree;
@@ -333,7 +250,7 @@ namespace CybergrindMusicExplorer.Components
             return newTree;
         }
 
-        private static IDirectoryTree<TrackReference> TraverseFileTree(IDirectoryTree<FileInfo> tree) =>
+        private IDirectoryTree<TrackReference> TraverseFileTree(IDirectoryTree<FileInfo> tree) =>
             TraverseFileTree(tree, tree.name);
 
         private void DestroyObsoleteInstance()
@@ -343,5 +260,17 @@ namespace CybergrindMusicExplorer.Components
             playlistEditor = playlistEditorParentObject.AddComponent<EnhancedMusicPlaylistEditor>();
             Destroy(oldPlaylistEditor);
         }
+
+        private static void RewireButtonTo(Button button, UnityAction call)
+        {
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(call);
+        }
+
+        private static Button ControlButton(string path) =>
+            GameObject.Find(BaseCanvasPath + path).GetComponent<Button>();
+
+        private static void SetActiveAll(List<GameObject> objects, bool active) =>
+            objects.ForEach(o => o.SetActive(active));
     }
 }
