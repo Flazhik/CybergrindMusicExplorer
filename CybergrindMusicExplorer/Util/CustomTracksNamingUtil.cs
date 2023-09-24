@@ -21,6 +21,12 @@ namespace CybergrindMusicExplorer.Util
             "intro",
             "loop"
         };
+        
+        public static FileInfo FileWithAnotherExtension(FileInfo path, string extension)
+        {
+            return new FileInfo(
+                $"{GetDirectoryName(path.FullName)}\\{GetFileNameWithoutExtension(path.FullName)}.{extension}");
+        }
 
         public static FileInfo WithPostfix(FileInfo path, string postfix)
         {

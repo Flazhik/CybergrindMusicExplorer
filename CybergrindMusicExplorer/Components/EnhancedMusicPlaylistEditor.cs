@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using CybergrindMusicExplorer.Data;
 using Newtonsoft.Json;
+using SubtitlesParser.Classes;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
@@ -141,7 +142,8 @@ namespace CybergrindMusicExplorer.Components
                         {
                             var fileInfo = new FileInfo(Path.Combine(CustomSongsPath, reference.Reference));
                             Playlist.SongData songData = null;
-                            yield return tracksLoader.LoadSongData(fileInfo, data => songData = data);
+                            List<List<SubtitleItem>> subtitles = default;
+                            yield return tracksLoader.LoadSongData(fileInfo, data => songData = data, subs => subtitles = subs);
 
                             if (songData == null)
                             {
@@ -151,6 +153,9 @@ namespace CybergrindMusicExplorer.Components
                                 break;
                             }
 
+                            if (subtitles != default && subtitles.Count != 0)
+                                Playlist.AddSubtitles(reference, subtitles);
+                            
                             Playlist.AddTrack(reference, songData);
                             break;
                         }

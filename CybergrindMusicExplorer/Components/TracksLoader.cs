@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using CybergrindMusicExplorer.Data;
+using SubtitlesParser.Classes;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
@@ -18,6 +19,8 @@ namespace CybergrindMusicExplorer.Components
             new Dictionary<string, SongData>();
 
         private readonly Dictionary<string, SoundtrackSong> soundtrackCache = new Dictionary<string, SoundtrackSong>();
+        private readonly Dictionary<string, List<List<SubtitleItem>>> subtitlesCache =
+            new Dictionary<string, List<List<SubtitleItem>>>();
         private readonly Sprite defaultIcon;
 
         public TracksLoader(Sprite defaultIcon)
@@ -47,20 +50,28 @@ namespace CybergrindMusicExplorer.Components
             callback.Invoke(song);
         }
 
-        public IEnumerator LoadSongData(FileInfo fileInfo, Action<SongData> callback)
+        public IEnumerator LoadSongData(FileInfo fileInfo, Action<SongData> callback, Action<List<List<SubtitleItem>>> subtitles)
         {
             CustomTrackMetadata metadata;
             AudioClip introClip = null, loopClip = null;
 
-            if (customTracksCache.TryGetValue(fileInfo.FullName, out var value))
+            if (customTracksCache.TryGetValue(fileInfo.FullName, out var songData))
             {
-                callback.Invoke(value);
+                callback.Invoke(songData);
+                if (subtitlesCache.TryGetValue(fileInfo.FullName, out var subs))
+                    subtitles.Invoke(subs);
+                
                 yield break;
             }
 
             if (fileInfo.Exists)
             {
-                metadata = CustomTrackMetadata.From(File.Create(fileInfo.FullName));
+                var file = File.Create(fileInfo.FullName);
+                metadata = CustomTrackMetadata.From(file);
+                
+                subtitlesCache[fileInfo.FullName] = new List<List<SubtitleItem>> { LoadSubtitlesFor(fileInfo) };
+                subtitles.Invoke(subtitlesCache[fileInfo.FullName]);
+
                 yield return LoadSong(fileInfo, clip => loopClip = clip);
                 Debug.Log($"[CybergrindMusicExplorer] Loaded custom music file={fileInfo.Name}");
             }
@@ -73,6 +84,16 @@ namespace CybergrindMusicExplorer.Components
                     yield break;
 
                 metadata = CustomTrackMetadata.From(File.Create(introClipInfo.FullName));
+
+                var introSubs = LoadSubtitlesFor(introClipInfo);
+                var loopSubs = LoadSubtitlesFor(loopClipInfo);
+
+                subtitlesCache[introClipInfo.FullName] = new List<List<SubtitleItem>>
+                {
+                    introSubs, loopSubs
+                };
+                
+                subtitles.Invoke(subtitlesCache[introClipInfo.FullName]);
 
                 yield return LoadSong(introClipInfo, clip => introClip = clip);
                 yield return LoadSong(loopClipInfo, clip => loopClip = clip);
@@ -103,6 +124,11 @@ namespace CybergrindMusicExplorer.Components
                 Debug.Log(
                     $"[CybergrindMusicExplorer] Can't retrieve custom track {fileInfo.Name} metadata");
             }
+        }
+
+        private static List<SubtitleItem> LoadSubtitlesFor(FileInfo clipFile)
+        {
+            return SubtitlesManager.GetSubtitlesFor(clipFile);
         }
 
         private static SongData SongDataFromCustomAudioClip(AudioClip intro, AudioClip loop, string title,

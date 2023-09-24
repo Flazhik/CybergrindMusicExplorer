@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using SubtitlesParser.Classes;
 using UnityEngine;
 using static CybergrindMusicExplorer.Util.ReflectionUtils;
 
@@ -40,6 +41,8 @@ namespace CybergrindMusicExplorer.Data
         }
 
         protected Dictionary<TrackReference, SongData> LoadedSongDict = new Dictionary<TrackReference, SongData>();
+        
+        protected Dictionary<TrackReference, List<List<SubtitleItem>>> SubtitlesDict = new Dictionary<TrackReference, List<List<SubtitleItem>>>();
 
         public new int Count => References.Count;
 
@@ -48,13 +51,16 @@ namespace CybergrindMusicExplorer.Data
         public bool GetSongData(TrackReference reference, out SongData data) =>
             LoadedSongDict.TryGetValue(reference, out data);
 
+        public bool GetSubtitles(TrackReference reference, out List<List<SubtitleItem>> subtitles) =>
+            SubtitlesDict.TryGetValue(reference, out subtitles);
+        
         public void AddTrack(TrackReference reference, SoundtrackSong song)
         {
             AddTrack(reference,
                 new SongData(song.songName + " <color=grey>" + song.extraLevelBit + "</color>", song.icon,
                     song.introClip, song.clips, song.maxClipsIfNotRepeating));
         }
-
+        
         public void AddTrack(TrackReference reference, SongData song)
         {
             if (song == null)
@@ -67,20 +73,23 @@ namespace CybergrindMusicExplorer.Data
                 References.Add(reference);
                 if (!LoadedSongDict.ContainsKey(reference))
                     LoadedSongDict.Add(reference, song);
+
                 if (Changed == null)
                     return;
                 Changed();
             }
         }
 
+        public void AddSubtitles(TrackReference reference, List<List<SubtitleItem>> subtitles)
+        {
+            if (!SubtitlesDict.ContainsKey(reference))
+                SubtitlesDict.Add(reference, subtitles);
+        }
+
         public new void Swap(int index1, int index2)
         {
-            TrackReference reference = this.References[index1];
-            this.References[index1] = this.References[index2];
-            this.References[index2] = reference;
-            if (Changed == null)
-                return;
-            Changed();
+            (References[index1], References[index2]) = (References[index2], References[index1]);
+            Changed?.Invoke();
         }
 
         public new void Remove(int index)

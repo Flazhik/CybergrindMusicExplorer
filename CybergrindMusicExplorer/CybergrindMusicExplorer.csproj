@@ -10,7 +10,9 @@
         <RootNamespace>CybergrindMusicExplorer</RootNamespace>
         <AssemblyName>CybergrindMusicExplorer</AssemblyName>
         <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+        <TargetFramework>net48</TargetFramework>
         <FileAlignment>512</FileAlignment>
+        <LangVersion>8</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -31,7 +33,17 @@
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
+    <PropertyGroup>
+        <ULTRAKILLPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL</ULTRAKILLPath>
+        <ManagedDir>$(ULTRAKILLPath)\ULTRAKILL_Data\Managed\</ManagedDir>
+        <BepInExRootDir>$(ULTRAKILLPath)\BepInEx\</BepInExRootDir>
+        <BepInExCoreDir>$(BepInExRootDir)\core\</BepInExCoreDir>
+        <BepInExPluginsDir>$(BepInExRootDir)\plugins\</BepInExPluginsDir>
+    </PropertyGroup>
     <ItemGroup>
+        <Reference Include="SubtitlesParser">
+          <HintPath>lib\SubtitlesParser.dll</HintPath>
+        </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
     </ItemGroup>
@@ -39,6 +51,7 @@
         <Compile Include="AssetsManager.cs" />
         <Compile Include="Components\CybergrindEffectsChanger.cs" />
         <Compile Include="Components\EnhancedMusicPlayer.cs" />
+        <Compile Include="Components\SubtitlesManager.cs" />
         <Compile Include="Components\TracksLoader.cs" />
         <Compile Include="CybergrindMusicExplorer.cs" />
         <Compile Include="CybergrindMusicExplorerManager.cs" />
@@ -72,73 +85,79 @@
     </ItemGroup>
     <ItemGroup>
         <Reference Include="0Harmony">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\BepInEx\core\0Harmony.dll</HintPath>
+            <HintPath>$(BepInExCoreDir)0Harmony.dll</HintPath>
         </Reference>
         <Reference Include="TagLibSharp, Version=2.3.0.0, Culture=neutral, PublicKeyToken=db62eba44689b5b0, processorArchitecture=MSIL">
             <HintPath>..\packages\TagLibSharp.2.3.0\lib\net462\TagLibSharp.dll</HintPath>
         </Reference>
+        <Reference Include="SubtitlesParser, Version=1.5.1.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>lib\SubtitlesParser.dll</HintPath>
+        </Reference>
         <Reference Include="Assembly-CSharp">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\Assembly-CSharp.dll</HintPath>
+            <HintPath>$(ManagedDir)Assembly-CSharp.dll</HintPath>
         </Reference>
         <Reference Include="BepInEx">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\BepInEx\core\BepInEx.dll</HintPath>
+            <HintPath>$(BepInExCoreDir)BepInEx.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngineAudioModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.AudioModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.CoreModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.CoreModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.UI">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.UI.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.UI.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.AudioModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.AudioModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.CoreModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.CoreModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.UI">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.UI.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.UI.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.UIModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.UIModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.UnityWebRequestModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.UnityWebRequestModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.UnityWebRequestAudioModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.ImageConversionModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.ImageConversionModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.Addressables">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\Unity.Addressables.dll</HintPath>
+            <HintPath>$(ManagedDir)Unity.Addressables.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.ResourceManager">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\Unity.ResourceManager.dll</HintPath>
+            <HintPath>$(ManagedDir)Unity.ResourceManager.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.InputLegacyModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.InputLegacyModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.TextRenderingModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.TextRenderingModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.AssetBundleModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.AssetBundleModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.IMGUIModule">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+            <HintPath>$(ManagedDir)UnityEngine.IMGUIModule.dll</HintPath>
         </Reference>
         <Reference Include="Newtonsoft.Json">
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\ULTRAKILL_Data\Managed\Newtonsoft.Json.dll</HintPath>
+            <HintPath>$(ManagedDir)Newtonsoft.Json.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Content Include="ILRepack.targets" />
+        <Content Include="lib\SubtitlesParser.dll" />
+        <Content Include="lib\TagLibSharp.dll" />
         <Content Include="README.md" />
     </ItemGroup>
     <ItemGroup>
@@ -150,9 +169,18 @@
     <ItemGroup>
         <Folder Include="Resources\" />
     </ItemGroup>
-    <Target Name="CopyModDlls" AfterTargets="AfterBuild">
-        <Copy SourceFiles="$(OutDir)/$(AssemblyName).dll" DestinationFolder="C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL\BepInEx\plugins\CybergrindMusicExplorer\" />
-    </Target>
+    <ItemGroup>
+      <None Include="packages.config" />
+    </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-
+    <Target Name="CopyModDlls" AfterTargets="ILRepacker">
+        <Copy SourceFiles="$(OutDir)/$(AssemblyName).dll" DestinationFolder="$(BepInExPluginsDir)CybergrindMusicExplorer\" />
+    </Target>
+    <Import Project="..\packages\ILRepack.Lib.MSBuild.Task.2.0.18.2\build\ILRepack.Lib.MSBuild.Task.targets" Condition="Exists('..\packages\ILRepack.Lib.MSBuild.Task.2.0.18.2\build\ILRepack.Lib.MSBuild.Task.targets')" />
+    <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+      <PropertyGroup>
+        <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
+      </PropertyGroup>
+      <Error Condition="!Exists('..\packages\ILRepack.Lib.MSBuild.Task.2.0.18.2\build\ILRepack.Lib.MSBuild.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ILRepack.Lib.MSBuild.Task.2.0.18.2\build\ILRepack.Lib.MSBuild.Task.targets'))" />
+    </Target>
 </Project>

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CybergrindMusicExplorer.Data;
+using SubtitlesParser.Classes;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -138,8 +139,13 @@ namespace CybergrindMusicExplorer.Components
                 case SoundtrackType.External:
                 {
                     Playlist.SongData song = null;
+                    List<List<SubtitleItem>> subtitles = default;
                     var fileInfo = new FileInfo(Path.Combine(CustomSongsPath, reference.Reference));
-                    yield return tracksLoader.LoadSongData(fileInfo, data => song = data);
+                    yield return tracksLoader.LoadSongData(fileInfo, data => song = data, subs => subtitles = subs);
+                    
+                    if (subtitles != default && subtitles.Count != 0)
+                        playlistEditor.Playlist.AddSubtitles(reference, subtitles);
+                    
                     Destroy(placeholder);
 
                     if (song != null)

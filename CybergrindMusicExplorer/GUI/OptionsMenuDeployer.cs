@@ -13,12 +13,12 @@ namespace CybergrindMusicExplorer.GUI
         private CybergrindMusicExplorerManager manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
         private AudioMixerController mixer = MonoSingleton<AudioMixerController>.Instance;
         private GunControl gunControl;
-        private CgmeBindingsController bindingsController;
 
         private GameObject canvas;
         private GameObject menu;
         private Toggle normalizationToggle;
         private Toggle infinitePanelToggle;
+        private Toggle displaySubtitlesToggle;
         private Slider boostSlider;
         private Text boostPercentage;
         private Button closeButton;
@@ -30,12 +30,13 @@ namespace CybergrindMusicExplorer.GUI
             menu = (GameObject)Instantiate(AssetsManager.Instance.GetAsset("assets/ui/cgme settings.prefab"),
                 canvas.transform);
 
-            bindingsController = menu.AddComponent<CgmeBindingsController>();
+            menu.AddComponent<CgmeBindingsController>();
             menu.AddComponent<HudOpenEffect>();
 
             closeButton = menu.transform.Find("Close Settings").GetComponent<Button>();
             normalizationToggle = menu.transform.Find("Normalize track").GetComponent<Toggle>();
             infinitePanelToggle = menu.transform.Find("Infinite panel").GetComponent<Toggle>();
+            displaySubtitlesToggle = menu.transform.Find("Display subtitles").GetComponent<Toggle>();
 
             boostSlider = menu.transform.Find("Boost Settings").Find("Slider").GetComponent<Slider>();
             boostPercentage = menu.transform.Find("Boost Settings").Find("Percentage").GetComponent<Text>();
@@ -75,19 +76,16 @@ namespace CybergrindMusicExplorer.GUI
         private void BindControls()
         {
             closeButton.onClick.AddListener(Close);
-            /*normalizationToggle.isOn =
-                MonoSingleton<CybergrindMusicExplorerManager>.Instance.NormalizeSoundtrack;
-            normalizationToggle.onValueChanged.AddListener(state =>
-            {
-                MonoSingleton<CybergrindMusicExplorerManager>.Instance.NormalizeSoundtrack = state;
-                var onOffText = state ? "on" : "off";
-                HudMessageReceiver.Instance.SendHudMessage(
-                    $"Soundtrack normalization will be switched {onOffText} after Cybergrind restart");
-            });*/
+
             infinitePanelToggle.isOn =
                 MonoSingleton<CybergrindMusicExplorerManager>.Instance.ShowCurrentTrackPanelIndefinitely;
             infinitePanelToggle.onValueChanged.AddListener(state =>
                 MonoSingleton<CybergrindMusicExplorerManager>.Instance.ShowCurrentTrackPanelIndefinitely = state);
+
+            displaySubtitlesToggle.isOn =
+                MonoSingleton<PrefsManager>.Instance.GetBool("subtitlesEnabled");
+            displaySubtitlesToggle.onValueChanged.AddListener(state =>
+                MonoSingleton<OptionsMenuToManager>.Instance.SetSubtitles(state));
 
             boostSlider.onValueChanged.AddListener(value =>
             {

@@ -20,7 +20,6 @@ namespace CybergrindMusicExplorer
         {
             foreach (var assetName in bundle.AllAssetNames())
             {
-                Debug.LogWarning(assetName);
                 _prefabs.Add(assetName, bundle.LoadAsset<Object>(assetName));
             }
         }

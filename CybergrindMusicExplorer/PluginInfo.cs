@@ -4,6 +4,6 @@
     {
         public const string GUID = "dev.flazhik.cybergrindexplorer";
         public const string NAME = "CybergrindMusicExplorer";
-        public const string VERSION = "1.2.2";
+        public const string VERSION = "1.3.1";
     }
 }

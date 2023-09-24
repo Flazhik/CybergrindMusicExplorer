@@ -39,6 +39,16 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                 .Find("Special naming info")
                 .gameObject
                 .AddComponent<HudOpenEffect>();
+            
+            transform
+                .Find("Developer Contacts")
+                .gameObject
+                .AddComponent<HudOpenEffect>();
+            
+            transform
+                .Find("Subtitles info")
+                .gameObject
+                .AddComponent<HudOpenEffect>();
         }
 
         // That's a dirty copy, bind I'm not going to cut ControlsOptions open
