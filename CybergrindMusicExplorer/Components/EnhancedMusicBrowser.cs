@@ -28,6 +28,7 @@ namespace CybergrindMusicExplorer.Components
         private GameObject loadingPrefab;
         private Sprite lockedLevelSprite;
         private Sprite defaultIcon;
+        private GameObject loadAllButton;
 
         private FakeDirectoryTree<TrackReference> _baseDirectory =
             new FakeDirectoryTree<TrackReference>("", new TrackReference[] { });
@@ -40,7 +41,7 @@ namespace CybergrindMusicExplorer.Components
 
         private void Awake()
         {
-            CloneObsoleteInstance(
+            CloneInstance(
                 FindObjectOfType<CustomMusicSoundtrackBrowser>(),
                 this,
                 privateFieldsToCopy: new List<string>
@@ -56,6 +57,7 @@ namespace CybergrindMusicExplorer.Components
             RewireButtonTo(ControlButton("NextButton"), NextPage);
             RewireButtonTo(ControlButton("PreviousButton"), PreviousPage);
             RewireButtonTo(ControlButton("ImageSelectorWrapper/BackButton"), StepUp);
+            InstantiateLoadAllButton();
 
             _baseDirectory = Folder("Songs",
                 children: new List<IDirectoryTree<TrackReference>>
@@ -139,12 +141,7 @@ namespace CybergrindMusicExplorer.Components
                 case SoundtrackType.External:
                 {
                     Playlist.SongData song = null;
-                    List<List<SubtitleItem>> subtitles = default;
-                    var fileInfo = new FileInfo(Path.Combine(CustomSongsPath, reference.Reference));
-                    yield return tracksLoader.LoadSongData(fileInfo, data => song = data, subs => subtitles = subs);
-                    
-                    if (subtitles != default && subtitles.Count != 0)
-                        playlistEditor.Playlist.AddSubtitles(reference, subtitles);
+                    yield return LoadSongDataAndSubtitles(reference, data => song = data);
                     
                     Destroy(placeholder);
 
@@ -157,6 +154,38 @@ namespace CybergrindMusicExplorer.Components
                         $"[CybergrindMusicExplorer] Trying to load unknown soundtrack reference={reference.Reference}, type {reference.Type}, ignoring");
                     break;
             }
+        }
+        
+        private IEnumerator LoadAllFromFolder(IDirectoryTree<TrackReference> folder)
+        {
+            foreach (var reference in folder.GetFilesRecursive())
+            {
+                Playlist.SongData data = null;
+                yield return StartCoroutine(LoadSongDataAndSubtitles(reference, song => data = song));
+                playlistEditor.Playlist.AddTrack(reference, data);
+            }
+            
+            playlistEditor.Rebuild();
+
+            // Going back to playlist using... some unconventional methods
+            var backButton = GameObject.Find($"{BaseCanvasPath}BackButton").GetComponent<ShopButton>();
+            var controllerPointerType = typeof(ShopButton).Assembly.GetType("ControllerPointer");
+            var controllerPointer = GetPrivate(backButton, typeof(ShopButton), "pointer");
+            var onPressed = (UnityEvent)GetPrivate(controllerPointer, controllerPointerType, "onPressed");
+            onPressed.Invoke();
+        }
+
+        private IEnumerator LoadSongDataAndSubtitles(TrackReference reference, Action<Playlist.SongData> callback)
+        {
+            Playlist.SongData song = null;
+            List<List<SubtitleItem>> subtitles = default;
+            var fileInfo = new FileInfo(Path.Combine(CustomSongsPath, reference.Reference));
+            yield return tracksLoader.LoadSongData(fileInfo, data => song = data, subs => subtitles = subs);
+                    
+            if (subtitles != default && subtitles.Count != 0)
+                playlistEditor.Playlist.AddSubtitles(reference, subtitles);
+            
+            callback.Invoke(song);
         }
 
         public void DrawOstButton(SoundtrackSong song, TrackReference reference, GameObject button)
@@ -207,6 +236,50 @@ namespace CybergrindMusicExplorer.Components
             btn.GetComponentInChildren<Text>().text = folder.name.ToUpper();
             btn.SetActive(true);
             return () => Destroy(btn);
+        }
+        
+        private void InstantiateLoadAllButton()
+        {
+            loadAllButton = Instantiate(ControlButton("PreviousButton").gameObject,
+                GameObject.Find(BaseCanvasPath).transform);
+            loadAllButton.GetComponent<RectTransform>().sizeDelta = new Vector2(100f, 45f);
+            loadAllButton.transform.localPosition = new Vector3(64f, 105f, -20f);
+
+            var textComponent = loadAllButton.transform.Find("Text").GetComponent<Text>();
+            textComponent.text = "LOAD ALL";
+            textComponent.fontSize = 16;
+            
+            loadAllButton.name = "Load All";
+
+            loadAllButton.GetComponent<Button>().onClick.RemoveAllListeners();
+        }
+
+        public override void Rebuild(bool setToPageZero = true)
+        {
+            var currentDirectory = (IDirectoryTree<TrackReference>)GetPrivate(this,
+                typeof(DirectoryTreeBrowser<TrackReference>), "currentDirectory");
+
+            if (currentDirectory.parent == null || IsOstFolder(currentDirectory))
+                loadAllButton.SetActive(false);
+            else {
+                loadAllButton.SetActive(true);
+                loadAllButton.GetComponent<Button>().onClick.RemoveAllListeners();
+                loadAllButton.GetComponent<Button>().onClick.AddListener(() => StartCoroutine(LoadAllFromFolder(currentDirectory)));
+            }
+            base.Rebuild(setToPageZero);
+        }
+
+        private static bool IsOstFolder(IDirectoryTree<TrackReference> folder)
+        {
+            var current = folder;
+            while (current.parent != null)
+            {
+                if (current.parent.parent == null && current.name == "OST")
+                    return true;
+                current = current.parent;
+            }
+
+            return false;
         }
 
         protected override Action BuildLeaf(TrackReference reference, int indexInPage)

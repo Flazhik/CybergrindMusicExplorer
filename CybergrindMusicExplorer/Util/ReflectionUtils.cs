@@ -13,7 +13,7 @@ namespace CybergrindMusicExplorer.Util
         private static readonly BindingFlags BindingFlagsFields =
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        public static void CloneObsoleteInstance<TNewType, TOldType>(
+        public static void CloneInstance<TNewType, TOldType>(
             TOldType oldInstance,
             TNewType newInstance,
             List<string> privateFieldsToCopy = null,
@@ -42,23 +42,23 @@ namespace CybergrindMusicExplorer.Util
 
         public static object GetPrivate<T>(T instance, Type classType, string field)
         {
-            FieldInfo privateField = classType.GetField(field, BindingFlagsFields);
+            var privateField = classType.GetField(field, BindingFlagsFields);
             return privateField.GetValue(instance);
         }
 
-        public static void SetPrivate<T, V>(T instance, Type classType, string field, V value)
+        public static void SetPrivate<T, TV>(T instance, Type classType, string field, TV value)
         {
-            FieldInfo privateField = classType.GetField(field, BindingFlagsFields);
+            var privateField = classType.GetField(field, BindingFlagsFields);
             privateField.SetValue(instance, value);
         }
 
         private static void ClonePrivateBaseField<TNewType, TOldType>(string fieldName, TOldType fromObj,
             TNewType toObj)
         {
-            Type source = typeof(TOldType);
-            Type derived = typeof(TNewType);
+            var source = typeof(TOldType);
+            var derived = typeof(TNewType);
 
-            bool found = false;
+            var found = false;
             do
             {
                 var field1 = source.GetFields(BindingFlagsFields).FirstOrDefault(f => f.Name == fieldName);

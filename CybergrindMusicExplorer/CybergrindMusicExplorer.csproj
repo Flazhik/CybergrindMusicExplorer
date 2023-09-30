@@ -51,6 +51,7 @@
         <Compile Include="AssetsManager.cs" />
         <Compile Include="Components\CybergrindEffectsChanger.cs" />
         <Compile Include="Components\EnhancedMusicPlayer.cs" />
+        <Compile Include="Components\PlaybackWindow.cs" />
         <Compile Include="Components\SubtitlesManager.cs" />
         <Compile Include="Components\TracksLoader.cs" />
         <Compile Include="CybergrindMusicExplorer.cs" />
@@ -61,7 +62,7 @@
         <Compile Include="Data\SoundtrackType.cs" />
         <Compile Include="GUI\Controllers\CGMEBindingsController.cs" />
         <Compile Include="GUI\GUIManager.cs" />
-        <Compile Include="GUI\OptionsMenuDeployer.cs" />
+        <Compile Include="GUI\GUIDeployer.cs" />
         <Compile Include="Patches\AudioMixerControllerPatch.cs" />
         <Compile Include="Patches\CustomMusicPlayerPatch.cs" />
         <Compile Include="Components\EnhancedMusicBrowser.cs" />

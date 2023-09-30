@@ -4,8 +4,11 @@ using UnityEngine.UI;
 
 namespace CybergrindMusicExplorer.GUI
 {
-    public class OptionsMenuDeployer : MonoBehaviour
+    public class GUIDeployer : MonoBehaviour
     {
+        public GameObject menuWindow;
+        public GameObject playbackWindow;
+
         private readonly OptionsManager optionsManager = OptionsManager.Instance;
         private readonly GameStateManager gameStateManager = GameStateManager.Instance;
         private readonly CameraController cameraController = MonoSingleton<CameraController>.Instance;
@@ -15,8 +18,6 @@ namespace CybergrindMusicExplorer.GUI
         private GunControl gunControl;
 
         private GameObject canvas;
-        private GameObject menu;
-        private Toggle normalizationToggle;
         private Toggle infinitePanelToggle;
         private Toggle displaySubtitlesToggle;
         private Slider boostSlider;
@@ -27,55 +28,92 @@ namespace CybergrindMusicExplorer.GUI
         public void Awake()
         {
             canvas = GameObject.Find("Canvas");
-            menu = (GameObject)Instantiate(AssetsManager.Instance.GetAsset("assets/ui/cgme settings.prefab"),
+            menuWindow = (GameObject)Instantiate(AssetsManager.Instance.GetAsset("assets/ui/cgme settings.prefab"),
                 canvas.transform);
+            playbackWindow = (GameObject)Instantiate(AssetsManager.Instance.GetAsset("assets/ui/playbackwindow.prefab"),
+                canvas.transform);
+            
+            menuWindow.AddComponent<CgmeBindingsController>();
+            menuWindow.AddComponent<HudOpenEffect>();
+            playbackWindow.AddComponent<HudOpenEffect>();
 
-            menu.AddComponent<CgmeBindingsController>();
-            menu.AddComponent<HudOpenEffect>();
+            closeButton = menuWindow.transform.Find("Close Settings").GetComponent<Button>();
+            infinitePanelToggle = menuWindow.transform.Find("Infinite panel").GetComponent<Toggle>();
+            displaySubtitlesToggle = menuWindow.transform.Find("Display subtitles").GetComponent<Toggle>();
 
-            closeButton = menu.transform.Find("Close Settings").GetComponent<Button>();
-            normalizationToggle = menu.transform.Find("Normalize track").GetComponent<Toggle>();
-            infinitePanelToggle = menu.transform.Find("Infinite panel").GetComponent<Toggle>();
-            displaySubtitlesToggle = menu.transform.Find("Display subtitles").GetComponent<Toggle>();
-
-            boostSlider = menu.transform.Find("Boost Settings").Find("Slider").GetComponent<Slider>();
-            boostPercentage = menu.transform.Find("Boost Settings").Find("Percentage").GetComponent<Text>();
+            boostSlider = menuWindow.transform.Find("Boost Settings").Find("Slider").GetComponent<Slider>();
+            boostPercentage = menuWindow.transform.Find("Boost Settings").Find("Percentage").GetComponent<Text>();
 
             BindControls();
 
             gunControl = newMovement.GetComponentInChildren<GunControl>();
-            menu.SetActive(false);
+            menuWindow.SetActive(false);
         }
 
         public void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Escape) && menu.activeSelf)
-                Close();
+            if (GameIsPaused())
+                return;
+            
+            // On Escape
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (menuWindow.activeSelf)
+                    CloseOptionsMenu();
+                
+                if (playbackWindow.activeSelf)
+                    ClosePlaybackMenu();
+            }
 
+            // On CGME menu binding
             if (Input.GetKeyDown((KeyCode)manager.MenuBinding))
             {
-                if (!menu.activeSelf && !optionsManager.paused)
-                    Show();
+                if (playbackWindow.activeSelf)
+                    return;
+                
+                if (!menuWindow.activeSelf)
+                    OpenOptionsMenu();
                 else
-                    Close();
+                    CloseOptionsMenu();
             }
+
+            // On playback menu binding
+            if (!Input.GetKeyDown((KeyCode)manager.PlaybackMenuBinding))
+                return;
+            
+            if (!playbackWindow.activeSelf)
+                OpenPlaybackMenu();
+            else
+                ClosePlaybackMenu();
         }
 
-        public void Show()
+        public void OpenOptionsMenu()
         {
-            Pause();
-            menu.SetActive(true);
+            menuWindow.SetActive(true);
+            Pause("cgmeMenu", menuWindow);
         }
 
-        public void Close()
+        public void CloseOptionsMenu()
         {
-            UnPause();
-            menu.SetActive(false);
+            menuWindow.SetActive(false);
+            UnPause("cgmeMenu");
+        }
+        
+        public void OpenPlaybackMenu()
+        {
+            playbackWindow.SetActive(true);
+            Pause("cgmePlayback", playbackWindow);
+        }
+        
+        public void ClosePlaybackMenu()
+        {
+            playbackWindow.SetActive(false);
+            UnPause("cgmePlayback");
         }
 
         private void BindControls()
         {
-            closeButton.onClick.AddListener(Close);
+            closeButton.onClick.AddListener(CloseOptionsMenu);
 
             infinitePanelToggle.isOn =
                 MonoSingleton<CybergrindMusicExplorerManager>.Instance.ShowCurrentTrackPanelIndefinitely;
@@ -96,7 +134,7 @@ namespace CybergrindMusicExplorer.GUI
             boostSlider.value = manager.CustomTracksBoost;
         }
 
-        private void Pause()
+        private void Pause(string stateKey, GameObject window)
         {
             if (newMovement == null)
             {
@@ -107,17 +145,23 @@ namespace CybergrindMusicExplorer.GUI
             newMovement.enabled = false;
             cameraController.activated = false;
             gunControl.activated = false;
-            gameStateManager.RegisterState(new GameState("cgmeMenu", new[] { menu })
+            gameStateManager.RegisterState(new GameState(stateKey, new[] { window })
             {
                 cursorLock = LockMode.Unlock,
                 cameraInputLock = LockMode.Lock,
                 playerInputLock = LockMode.Lock
             });
+            
             optionsManager.paused = true;
         }
 
-        private void UnPause()
+        private void UnPause(string stateKey)
         {
+            gameStateManager.PopState(stateKey);
+            
+            if (menuWindow.activeSelf || playbackWindow.activeSelf)
+                return;
+            
             if (newMovement == null)
             {
                 newMovement = MonoSingleton<NewMovement>.Instance;
@@ -129,8 +173,12 @@ namespace CybergrindMusicExplorer.GUI
             optionsManager.paused = false;
             cameraController.activated = true;
             newMovement.enabled = true;
-            gameStateManager.PopState("cgmeMenu");
             gunControl.activated = true;
+        }
+
+        private bool GameIsPaused()
+        {
+            return gameStateManager.IsStateActive("pause");
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using CybergrindMusicExplorer.Data;
+using CybergrindMusicExplorer.GUI;
 using CybergrindMusicExplorer.Util;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,15 +15,19 @@ namespace CybergrindMusicExplorer.Components
         private readonly CybergrindMusicExplorerManager manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
         private readonly OptionsManager optionsManager = MonoSingleton<OptionsManager>.Instance;
 
+        private PlaybackWindow playback;
+        
         [SerializeField] private CanvasGroup panelGroup;
         [SerializeField] private Text panelText;
         [SerializeField] private Image panelIcon;
         [SerializeField] private MusicChanger changer;
         [SerializeField] private EnhancedMusicPlaylistEditor playlistEditor;
         [SerializeField] private Sprite defaultIcon;
+
         public float panelApproachTime;
         public float panelStayTime;
-
+        
+        private int currentTrackPosition;
         private bool stopped;
         private bool nextTrack;
 
@@ -34,12 +39,15 @@ namespace CybergrindMusicExplorer.Components
 
         private void Awake()
         {
-            CloneObsoleteInstance(
+            CloneInstance(
                 FindObjectOfType<CustomMusicPlayer>(),
                 this,
                 fieldsToIgnore: new List<string> { "playlistEditor" });
 
             playlistEditor = CybergrindMusicExplorer.GetEnhancedPlaylistEditor();
+            playback = GUIManager.GUIDeployer.playbackWindow.AddComponent<PlaybackWindow>();
+            playback.OnSongSelected += ChangeSong;
+
             Destroy(FindObjectOfType<CustomMusicPlayer>());
         }
 
@@ -55,38 +63,6 @@ namespace CybergrindMusicExplorer.Components
         }
 
         public void StopPlaylist() => stopped = true;
-        
-        private IEnumerator SubtitlesRoutine(TrackReference reference, int clip)
-        {
-            if (!playlistEditor.Playlist.GetSubtitles(reference, out var subtitlesList))
-                yield break;
-            if (subtitlesList.Count <= clip || subtitlesList[clip] == default)
-                yield break;
-
-            var subtitles = subtitlesList[clip];
-            
-            for (var i = 0; i < subtitles.Count; i++)
-            {
-                var waitFor = (float) (i == 0
-                    ? subtitles[i].StartTime
-                    : subtitles[i].StartTime - subtitles[i - 1].StartTime) / 1000;
-
-                while (waitFor > 0.0)
-                {
-                    if (!Application.isFocused)
-                        yield return null;
-                    
-                    waitFor -= optionsManager.paused
-                        ? Time.unscaledDeltaTime
-                        : Time.deltaTime;
-                    
-                    yield return null;
-                }
-
-                if (!optionsManager.paused)
-                    MonoSingleton<SubtitleController>.Instance.DisplaySubtitle(string.Join(" ", subtitles[i].Lines.ToArray()));
-            }
-        }
 
         private IEnumerator ShowPanelRoutine(Playlist.SongData song)
         {
@@ -121,39 +97,46 @@ namespace CybergrindMusicExplorer.Components
         private IEnumerator PlaylistRoutine()
         {
             IEnumerator currentSubtitlesRoutine = default;
-            var musicPlayer = this;
+            currentTrackPosition = 0;
+
             var themeNotPlaying = new WaitUntil(() =>
-                Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying && !musicPlayer.stopped || nextTrack);
+                Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying && !stopped || nextTrack);
             var first = true;
-            var playlist = musicPlayer.playlistEditor.Playlist;
+            var playlist = playlistEditor.Playlist;
 
             Playlist.SongData lastSong = null;
 
-            var order = playlist.shuffled
+            var shuffled = playlist.shuffled
                 ? (IEnumerable<TrackReference>)new DeckShuffled<TrackReference>(playlist.References)
                 : playlist.References;
 
             if (playlist.loopMode == Playlist.LoopMode.LoopOne)
-                order = order.Skip(playlist.selected).Take(1);
-            
-            while (!musicPlayer.stopped)
+                shuffled = shuffled.Skip(playlist.selected).Take(1);
+
+            var order = shuffled.ToList();
+            playback.ChangeOrder(order);
+
+            while (!stopped)
             {
-                foreach (var reference in order)
+                for (currentTrackPosition = 0; currentTrackPosition < order.Count; currentTrackPosition++)
                 {
+                    var reference = order[currentTrackPosition];
+                    
                     if (nextTrack)
                         nextTrack = false;
 
+                    playback.ChangeCurrent(currentTrackPosition);
                     if (currentSubtitlesRoutine != default)
                         StopCoroutine(currentSubtitlesRoutine);
                     
-                    musicPlayer.playlistEditor.Playlist.GetSongData(reference, out var currentSong);
+                    playlistEditor.Playlist.GetSongData(reference, out var currentSong);
                     Debug.Log($"[CybergrindMusicExplorer] Now playing {currentSong.name}");
 
                     // Only allow boosting for custom tracks
                     manager.allowMusicBoost = reference.Type == SoundtrackType.External;
 
                     if (lastSong != currentSong)
-                        musicPlayer.StartCoroutine(musicPlayer.ShowPanelRoutine(currentSong));
+                        StartCoroutine(ShowPanelRoutine(currentSong));
                     if (first)
                     {
                         if (currentSong.introClip != null)
@@ -161,7 +144,7 @@ namespace CybergrindMusicExplorer.Components
                             currentSubtitlesRoutine = SubtitlesRoutine(reference, 0);
                             StartCoroutine(currentSubtitlesRoutine);
                             
-                            musicPlayer.changer.ChangeTo(currentSong.introClip);
+                            changer.ChangeTo(currentSong.introClip);
                             yield return themeNotPlaying;
                         }
 
@@ -171,12 +154,12 @@ namespace CybergrindMusicExplorer.Components
                     var i = 0;
                     for (var j = 0; j < currentSong.clips.Count; j++)
                     {
-                        if (musicPlayer.playlistEditor.Playlist.loopMode == Playlist.LoopMode.LoopOne ||
+                        if (playlistEditor.Playlist.loopMode == Playlist.LoopMode.LoopOne ||
                             currentSong.maxClips <= -1 || i < currentSong.maxClips)
                         {
                             currentSubtitlesRoutine = SubtitlesRoutine(reference, currentSong.introClip == null ? j : j + 1);
                             StartCoroutine(currentSubtitlesRoutine);
-                            musicPlayer.changer.ChangeTo(currentSong.clips[j]);
+                            changer.ChangeTo(currentSong.clips[j]);
                             ++i;
                             yield return themeNotPlaying;
                         }
@@ -185,11 +168,49 @@ namespace CybergrindMusicExplorer.Components
                     }
 
                     lastSong = currentSong;
-                    musicPlayer.changer.ChangeTo(null);
+                    changer.ChangeTo(null);
                     currentSong = null;
                 }
 
                 yield return null;
+            }
+        }
+
+        private void ChangeSong(int position)
+        {
+            currentTrackPosition = position;
+            changer.ChangeTo(null);
+        }
+        
+        private IEnumerator SubtitlesRoutine(TrackReference reference, int clip)
+        {
+            if (!playlistEditor.Playlist.GetSubtitles(reference, out var subtitlesList))
+                yield break;
+            if (subtitlesList.Count <= clip || subtitlesList[clip] == default)
+                yield break;
+
+            var subtitles = subtitlesList[clip];
+            
+            for (var i = 0; i < subtitles.Count; i++)
+            {
+                var waitFor = (float) (i == 0
+                    ? subtitles[i].StartTime
+                    : subtitles[i].StartTime - subtitles[i - 1].StartTime) / 1000;
+
+                while (waitFor > 0.0)
+                {
+                    if (!Application.isFocused)
+                        yield return null;
+                    
+                    waitFor -= optionsManager.paused
+                        ? Time.unscaledDeltaTime
+                        : Time.deltaTime;
+                    
+                    yield return null;
+                }
+
+                if (!optionsManager.paused)
+                    MonoSingleton<SubtitleController>.Instance.DisplaySubtitle(string.Join(" ", subtitles[i].Lines.ToArray()));
             }
         }
     }

@@ -36,7 +36,7 @@ namespace CybergrindMusicExplorer.Data
                     new Vector2(0.5f, 0.5f), 100.0f);
             }
 
-            return new CustomTrackMetadata(logo, tags.Title, tags.FirstAlbumArtist);
+            return new CustomTrackMetadata(logo, tags.Title, tags.FirstPerformer);
         }
     }
 }

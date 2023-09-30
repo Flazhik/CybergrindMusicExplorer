@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 using static ControlsOptions;
@@ -15,6 +14,7 @@ namespace CybergrindMusicExplorer.GUI.Controllers
         private GameObject currentKey;
         private Transform optionsMenu;
         private Transform nextTrack;
+        private Transform playbackMenu;
 
         public void Awake()
         {
@@ -34,6 +34,12 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                 .Find("CGMEMenu");
             optionsMenu.GetComponent<Button>().onClick.AddListener(() => ChangeKey(optionsMenu.gameObject));
             optionsMenu.Find("Text").GetComponent<Text>().text = GetKeyName((KeyCode)manager.MenuBinding);
+            
+            playbackMenu = transform
+                .Find("CGMEPlaybackMenu")
+                .Find("CGMEPlaybackMenu");
+            playbackMenu.GetComponent<Button>().onClick.AddListener(() => ChangeKey(playbackMenu.gameObject));
+            playbackMenu.Find("Text").GetComponent<Text>().text = GetKeyName((KeyCode)manager.PlaybackMenuBinding);
 
             transform
                 .Find("Special naming info")
@@ -58,7 +64,9 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                 return;
 
             var current = Event.current;
-            if (current.keyCode == KeyCode.Escape || Input.GetKey(KeyCode.Mouse0))
+            if (current.keyCode == KeyCode.Escape
+                || Input.GetKey(KeyCode.Mouse0)
+                || (currentKey.name != "CGMEMenu" && current.keyCode == (KeyCode)manager.MenuBinding))
             {
                 currentKey.GetComponent<Image>().color = NormalColor;
                 currentKey = null;

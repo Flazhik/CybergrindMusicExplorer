@@ -47,7 +47,7 @@ namespace CybergrindMusicExplorer.Components
         private void Awake()
         {
             SetPrivate(this, typeof(DirectoryTreeBrowser<TrackReference>), "currentDirectory", baseDirectory);
-            CloneObsoleteInstance(
+            CloneInstance(
                 FindObjectOfType<CustomMusicPlaylistEditor>(),
                 this,
                 privateFieldsToCopy: new List<string>
