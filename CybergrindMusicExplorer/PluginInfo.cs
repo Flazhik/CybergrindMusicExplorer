@@ -1,9 +1,9 @@
 ﻿namespace CybergrindMusicExplorer
 {
-    internal class PluginInfo
+    internal static class PluginInfo
     {
         public const string GUID = "dev.flazhik.cybergrindexplorer";
         public const string NAME = "CybergrindMusicExplorer";
-        public const string VERSION = "1.4.0";
+        public const string VERSION = "1.5.0";
     }
 }

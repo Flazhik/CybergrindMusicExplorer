@@ -17,6 +17,24 @@ namespace CybergrindMusicExplorer
             get => prefsManager.GetFloatLocal("cyberGrind.musicExplorer.customTracksVolumeBoost");
             set => prefsManager.SetFloatLocal("cyberGrind.musicExplorer.customTracksVolumeBoost", value);
         }
+        
+        public bool PlayCalmTheme
+        {
+            get => prefsManager.GetBoolLocal("cyberGrind.musicExplorer.playCalmTheme", true);
+            set => prefsManager.SetBoolLocal("cyberGrind.musicExplorer.playCalmTheme", value);
+        }
+        
+        public bool PreventDuplicateTracks
+        {
+            get => prefsManager.GetBoolLocal("cyberGrind.musicExplorer.preventDuplicateTracks", false);
+            set => prefsManager.SetBoolLocal("cyberGrind.musicExplorer.preventDuplicateTracks", value);
+        }
+        
+        public int CalmThemeEnemiesThreshold
+        {
+            get => prefsManager.GetIntLocal("cyberGrind.musicExplorer.calmThemeEnemiesThreshold", 2);
+            set => prefsManager.SetIntLocal("cyberGrind.musicExplorer.calmThemeEnemiesThreshold", value);
+        }
 
         public int NextTrackBinding =>
             prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMENextTrack", 284);

@@ -16,6 +16,7 @@ namespace CybergrindMusicExplorer.Util.Patching
         private readonly MethodInfo targetMethod;
         private MethodInfo prefix;
         private MethodInfo postfix;
+        private MethodInfo transpiler;
         private Harmony harmony;
 
         private PatchRequest(IReflect targetType, string methodName)
@@ -38,6 +39,12 @@ namespace CybergrindMusicExplorer.Util.Patching
         {
             postfix = patcherType.GetMethod(postfixName, HarmonyPatchesAttributes);
             return this;
+        }        
+        
+        public PatchRequest WithTranspiler(Type patcherType, string postfixName)
+        {
+            transpiler = patcherType.GetMethod(postfixName, HarmonyPatchesAttributes);
+            return this;
         }
 
         public PatchRequest Using(Harmony harmonyInstance)
@@ -55,7 +62,8 @@ namespace CybergrindMusicExplorer.Util.Patching
                 harmony.Patch(
                     targetMethod,
                     prefix: prefix != null ? new HarmonyMethod(prefix) : null,
-                    postfix: postfix != null ? new HarmonyMethod(postfix) : null);
+                    postfix: postfix != null ? new HarmonyMethod(postfix) : null,
+                    transpiler: transpiler != null ? new HarmonyMethod(transpiler) : null);
         }
     }
 }

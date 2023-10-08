@@ -18,7 +18,8 @@ namespace CybergrindMusicExplorer.Components
 {
     public class EnhancedMusicPlaylistEditor : DirectoryTreeBrowser<TrackReference>
     {
-        public const string PanelCanvasPath = "/FirstRoom/Room/CyberGrindSettings/Canvas/Playlist/";
+        private const string PanelCanvasPath = "/FirstRoom/Room/CyberGrindSettings/Canvas/Playlist/";
+        private readonly CybergrindMusicExplorerManager manager = CybergrindMusicExplorerManager.Instance;
         
         private readonly Dictionary<Transform, Coroutine> changeAnchorRoutines = new Dictionary<Transform, Coroutine>();
         private readonly List<Transform> buttons = new List<Transform>();
@@ -46,7 +47,7 @@ namespace CybergrindMusicExplorer.Components
 
         private void Awake()
         {
-            SetPrivate(this, typeof(DirectoryTreeBrowser<TrackReference>), "currentDirectory", baseDirectory);
+            SetCurrentDirectory();
             CloneInstance(
                 FindObjectOfType<CustomMusicPlaylistEditor>(),
                 this,
@@ -98,7 +99,7 @@ namespace CybergrindMusicExplorer.Components
 
         private IEnumerator LoadPlaylist()
         {
-            Debug.Log("[CybergrindMusicExplorer] Loading Playlist");
+            Debug.Log("Loading Playlist");
             CustomPlaylist loadedPlaylist;
 
             using (var streamReader = new StreamReader(File.Open(PlaylistJsonPath, FileMode.OpenOrCreate)))
@@ -106,19 +107,19 @@ namespace CybergrindMusicExplorer.Components
 
             if (loadedPlaylist?.References == null || loadedPlaylist.References.Count == 0)
             {
-                Debug.Log("[CybergrindMusicExplorer] No saved playlist found. Creating default...");
+                Debug.Log("No saved playlist found. Creating default...");
                 foreach (var referenceSoundtrackSong in browser.rootFolder)
                 {
                     var handle = referenceSoundtrackSong.LoadAssetAsync();
                     var song = handle.WaitForCompletion();
-                    Playlist.AddTrack(new TrackReference(SoundtrackType.Asset, referenceSoundtrackSong.AssetGUID),
+                    Playlist.AddOriginalTrack(new TrackReference(SoundtrackType.Asset, referenceSoundtrackSong.AssetGUID),
                         song);
                     Addressables.Release(handle);
                 }
             }
             else
             {
-                Debug.Log("[CybergrindMusicExplorer] Playlist exists");
+                Debug.Log("Playlist exists");
                 Playlist.loopMode = loadedPlaylist.loopMode;
                 Playlist.selected = loadedPlaylist.selected;
                 Playlist.shuffled = loadedPlaylist.shuffled;
@@ -126,55 +127,56 @@ namespace CybergrindMusicExplorer.Components
                 var outdatedTracks = new List<TrackReference>();
                 foreach (var reference in loadedPlaylist.References)
                 {
-                    Debug.Log($"[CybergrindMusicExplorer] Loading track {reference.Reference}");
+                    Debug.Log($"Loading track {reference.Reference}");
+                    CustomSongData songData = null;
+                    
+                    if (manager.PreventDuplicateTracks && Playlist.References.Contains(reference))
+                        continue;
+                    
                     switch (reference.Type)
                     {
                         case SoundtrackType.Asset:
                         {
-                            var handle = new AssetReferenceSoundtrackSong(reference.Reference).LoadAssetAsync();
-                            handle.WaitForCompletion();
-                            Playlist.AddTrack(reference, handle.Result);
-                            Addressables.Release(handle);
-                            Debug.Log($"[CybergrindMusicExplorer] Loaded soundtrack id={reference.Reference}");
+                            yield return tracksLoader.LoadSongData(reference, data => songData = data);
+                            Debug.Log($"Loaded soundtrack id={reference.Reference}");
                             break;
                         }
                         case SoundtrackType.External:
                         {
                             var fileInfo = new FileInfo(Path.Combine(CustomSongsPath, reference.Reference));
-                            Playlist.SongData songData = null;
                             List<List<SubtitleItem>> subtitles = default;
                             yield return tracksLoader.LoadSongData(fileInfo, data => songData = data, subs => subtitles = subs);
 
                             if (songData == null)
                             {
                                 Debug.LogWarning(
-                                    $"[CybergrindMusicExplorer] Track file {reference.Reference} doesn't exist, it will be removed.");
+                                    $"Track file {reference.Reference} doesn't exist, it will be removed.");
                                 outdatedTracks.Add(reference);
                                 break;
                             }
 
                             if (subtitles != default && subtitles.Count != 0)
                                 Playlist.AddSubtitles(reference, subtitles);
-                            
-                            Playlist.AddTrack(reference, songData);
+
+                            Debug.Log($"Loaded soundtrack filename={reference.Reference}");
                             break;
                         }
                         default:
                             Debug.LogError(
-                                $"[CybergrindMusicExplorer] Reference type {reference.Type} is not supported for reference {reference.Reference}, ignoring");
-                            break;
+                                $"Reference type {reference.Type} is not supported for reference {reference.Reference}, ignoring");
+                            yield break;
                     }
+                    
+                    Playlist.AddTrack(reference, songData);
                 }
 
                 if (outdatedTracks.Count > 0)
                 {
                     Debug.Log(
-                        $"[CybergrindMusicExplorer] Found {outdatedTracks.Count} outdated tracks, removing them from the playlist");
+                        $"Found {outdatedTracks.Count} outdated tracks, removing them from the playlist");
                     outdatedTracks.ForEach(reference => loadedPlaylist.Remove(reference));
                     SavePlaylist();
                 }
-
-                // TODO: Bad Idea
                 SetPrivate(this, typeof(DirectoryTreeBrowser<TrackReference>), "currentDirectory", baseDirectory);
             }
 
@@ -223,6 +225,15 @@ namespace CybergrindMusicExplorer.Components
         public void ToggleLoopMode() => SetLoopMode(Playlist.loopMode == global::Playlist.LoopMode.Loop
             ? global::Playlist.LoopMode.LoopOne
             : global::Playlist.LoopMode.Loop);
+        
+        public void RemoveDuplicates()
+        {
+            Playlist.References = Playlist.References.Distinct().ToList();
+            baseDirectory.Refresh();
+            SetCurrentDirectory();
+            SavePlaylist();
+            Rebuild();
+        }
 
         private void SetLoopMode(Playlist.LoopMode mode)
         {
@@ -293,9 +304,9 @@ namespace CybergrindMusicExplorer.Components
                 return null;
             }
 
-            Playlist.SongData data;
+            CustomSongData data;
             Playlist.GetSongData(reference, out data);
-
+            
             var go = Instantiate(itemButtonTemplate, itemButtonTemplate.transform.parent);
             var contentButton = go.GetComponent<CustomContentButton>();
             contentButton.text.text = data.name.ToUpper();
@@ -369,5 +380,8 @@ namespace CybergrindMusicExplorer.Components
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(call);
         }
+
+        private void SetCurrentDirectory() =>
+            SetPrivate(this, typeof(DirectoryTreeBrowser<TrackReference>), "currentDirectory", baseDirectory);
     }
 }

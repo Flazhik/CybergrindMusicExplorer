@@ -75,7 +75,7 @@ namespace CybergrindMusicExplorer.Components
 
         protected override Action BuildLeaf(TrackReference item, int currentIndex)
         {
-            Playlist.SongData data;
+            CustomSongData data;
             playlistEditor.Playlist.GetSongData(item, out data);
 
             var go = Instantiate(itemButtonTemplate, itemParent);

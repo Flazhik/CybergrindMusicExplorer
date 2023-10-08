@@ -1,5 +1,4 @@
 using HarmonyLib;
-using UnityEngine;
 
 namespace CybergrindMusicExplorer.Patches
 {
@@ -13,7 +12,7 @@ namespace CybergrindMusicExplorer.Patches
         public static bool AudioMixerController_SetMusicVolume_Prefix(float volume, AudioMixerController __instance)
         {
             if (_manager == null)
-                _manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
+                _manager = CybergrindMusicExplorerManager.Instance;
 
 
             var boost = _manager.allowMusicBoost ? _manager.CustomTracksBoost : 0;
