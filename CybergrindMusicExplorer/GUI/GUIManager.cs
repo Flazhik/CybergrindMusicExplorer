@@ -4,7 +4,7 @@ namespace CybergrindMusicExplorer.GUI
 {
     public class GUIManager : MonoSingleton<GUIManager>
     {
-        public static GUIDeployer GUIDeployer;
+        public static CgmeMenuDeployer GUIDeployer;
 
         public static void Init()
         {
@@ -22,8 +22,8 @@ namespace CybergrindMusicExplorer.GUI
         private static void Prepare()
         {
             var canvas = MonoSingleton<CanvasController>.Instance;
-            GUIDeployer = !canvas.TryGetComponent(out GUIDeployer deployer)
-                ? canvas.gameObject.AddComponent<GUIDeployer>()
+            GUIDeployer = !canvas.TryGetComponent(out CgmeMenuDeployer deployer)
+                ? canvas.gameObject.AddComponent<CgmeMenuDeployer>()
                 : deployer;
         }
     }

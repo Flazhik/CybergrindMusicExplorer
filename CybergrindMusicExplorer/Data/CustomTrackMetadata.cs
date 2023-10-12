@@ -38,5 +38,7 @@ namespace CybergrindMusicExplorer.Data
 
             return new CustomTrackMetadata(logo, tags.Title, tags.FirstPerformer);
         }
+
+        public static CustomTrackMetadata EmptyMetadata() => new CustomTrackMetadata(null, null, null);
     }
 }

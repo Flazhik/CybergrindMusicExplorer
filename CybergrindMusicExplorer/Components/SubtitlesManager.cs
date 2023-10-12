@@ -23,7 +23,7 @@ namespace CybergrindMusicExplorer.Components
             if (!Parsers.Any(p => FileWithAnotherExtension(track, p.Key).Exists))
                 return new List<SubtitleItem>();
             
-            Debug.Log($"[CybergrindMusicExplorer] Found subtitles for {track.Name}");
+            Debug.Log($"Found subtitles for {track.Name}");
 
             var parser = Parsers.First(p => FileWithAnotherExtension(track, p.Key).Exists);
             using var fileStream = File.OpenRead(FileWithAnotherExtension(track, parser.Key).FullName);

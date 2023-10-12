@@ -15,11 +15,20 @@ namespace CybergrindMusicExplorer.Util
             { ".wav", AudioType.WAV },
             { ".ogg", AudioType.OGGVORBIS }
         };
+        
+        private static readonly List<string> IntroLoopPostfixes = new List<string>
+        {
+            "intro",
+            "loop"
+        };
 
         private static readonly List<string> SpecialPostfixes = new List<string>
         {
             "intro",
-            "loop"
+            "loop",
+            "calm",
+            "calmloop",
+            "calmintro"
         };
         
         public static FileInfo FileWithAnotherExtension(FileInfo path, string extension)
@@ -47,12 +56,17 @@ namespace CybergrindMusicExplorer.Util
             return SpecialPostfixes.Any(postfix => HasSpecialPostfix(path, postfix));
         }
         
-        public static bool HasIntroAndLoop(IGrouping<string, FileInfo> tracks)
+        public static bool IntroOrLoopPart(FileInfo path)
         {
-            return SpecialPostfixes.All(postfix => tracks.Any(track => HasSpecialPostfix(track, postfix)));
+            return IntroLoopPostfixes.Any(postfix => HasSpecialPostfix(path, postfix));
         }
         
-        private static bool HasSpecialPostfix(FileInfo path, string postfix)
+        public static bool HasIntroAndLoop(IGrouping<string, FileInfo> tracks)
+        {
+            return IntroLoopPostfixes.All(postfix => tracks.Any(track => HasSpecialPostfix(track, postfix)));
+        }
+
+        public static bool HasSpecialPostfix(FileInfo path, string postfix)
         {
             return GetFileNameWithoutExtension(path.Name).EndsWith($"_{postfix}");
         }

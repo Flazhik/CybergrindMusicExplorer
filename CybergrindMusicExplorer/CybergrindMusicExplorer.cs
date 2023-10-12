@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.IO;
+using System.Threading.Tasks;
 using BepInEx;
 using CybergrindMusicExplorer.Components;
 using CybergrindMusicExplorer.GUI;
@@ -15,8 +17,10 @@ namespace CybergrindMusicExplorer
     [BepInPlugin(PluginInfo.GUID, PluginInfo.NAME, PluginInfo.VERSION)]
     public class CybergrindMusicExplorer : BaseUnityPlugin
     {
+        private static Version _newestVersion = new Version("1.0.0");
+        
         private static EnhancedMusicPlaylistEditor _editor;
-        private EnhancedMusicBrowser _browser;
+        private EnhancedMusicBrowser browser;
         private GameObject cybergrindMusicExplorerSettings;
         private GUIManager GUIManager;
         private CybergrindEffectsChanger cybergrindEffectsChanger;
@@ -26,11 +30,14 @@ namespace CybergrindMusicExplorer
         {
             return _editor;
         }
+        
+        public static Version GetNewestVersion() => _newestVersion;
 
         private void Awake()
         {
             Logger.LogInfo("Initializing Cybergrind Music Explorer");
             StartCoroutine(Startup());
+            
             AssetsManager.Instance.LoadAssets();
             AssetsManager.Instance.RegisterPrefabs();
         }
@@ -41,14 +48,14 @@ namespace CybergrindMusicExplorer
             GUIManager.Init();
             cybergrindEffectsChanger = CybergrindEffectsChanger.Instance;
             UpdateNote();
+            #pragma warning disable CS4014
+            RetrieveNewestVersion();
+            #pragma warning restore CS4014
             yield return null;
         }
 
         private IEnumerator OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
         {
-            MonoSingleton<CybergrindMusicExplorerManager>.Instance.allowMusicBoost = false;
-            PatchMusicManager();
-
             if (scene != SceneManager.GetActiveScene())
                 yield break;
 
@@ -56,7 +63,10 @@ namespace CybergrindMusicExplorer
             {
                 case "Endless":
                 {
-                    if (_browser != null)
+                    MonoSingleton<CybergrindMusicExplorerManager>.Instance.allowMusicBoost = false;
+                    PatchMusicManager();
+                    
+                    if (browser != null)
                         break;
                     yield return OnCybergrind();
                     break;
@@ -73,13 +83,14 @@ namespace CybergrindMusicExplorer
         private IEnumerator OnCybergrind()
         {
             MonoSingleton<CybergrindMusicExplorerManager>.Instance.allowMusicBoost = true;
+            CalmThemeManager.Instance.Init();
             PatchAudioMixer();
             PatchFinalCyberRank();
 
             EnhancedMusicBrowser.OnInit += OnEnhancedBrowserInit;
             var oldBrowser = FindObjectOfType<CustomMusicSoundtrackBrowser>();
             var musicObject = oldBrowser.transform.gameObject;
-            _browser = musicObject.AddComponent<EnhancedMusicBrowser>();
+            browser = musicObject.AddComponent<EnhancedMusicBrowser>();
             Destroy(oldBrowser);
             yield return new WaitForSeconds(2.5f);
             DisplayMenuMessage();
@@ -100,6 +111,12 @@ namespace CybergrindMusicExplorer
         {
             _editor = FindObjectOfType<EnhancedMusicPlaylistEditor>();
             PatchMusicPlayer();
+        }
+
+        private static async Task RetrieveNewestVersion()
+        {
+            await UpdatesManager.GetNewVersion();
+            _newestVersion = UpdatesManager.NewestVersion;
         }
 
         private void UpdateNote()

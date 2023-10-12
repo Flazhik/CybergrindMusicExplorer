@@ -45,6 +45,26 @@ namespace CybergrindMusicExplorer.Patches
                 .WithPrefix(typeof(MusicManagerPatch), "MusicManager_OnEnable_Prefix")
                 .Using(Harmony)
                 .Once();
+
+            if (SceneHelper.CurrentScene != "Endless")
+                return;
+            
+            PatchMethod(typeof(MusicManager), "StartMusic")
+                .WithPostfix(typeof(MusicManagerPatch), "MusicManager_StartMusic_Postfix")
+                .Using(Harmony)
+                .Once();
+
+            PatchMethod(typeof(MusicManager), "PlayBattleMusic")
+                .WithPrefix(typeof(MusicManagerPatch), "MusicManager_PlayBattleMusic_Prefix")
+                .WithTranspiler(typeof(MusicManagerPatch), "MusicManager_PlayBattleMusic_Transpiler")
+                .Using(Harmony)
+                .Once();
+
+            PatchMethod(typeof(MusicManager), "PlayCleanMusic")
+                .WithPrefix(typeof(MusicManagerPatch), "MusicManager_PlayCleanMusic_Prefix")
+                .WithTranspiler(typeof(MusicManagerPatch), "MusicManager_PlayCleanMusic_Transpiler")
+                .Using(Harmony)
+                .Once();
         }
 
         public static void PatchFinalCyberRank()

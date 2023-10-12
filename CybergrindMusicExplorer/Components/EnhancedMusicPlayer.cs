@@ -12,8 +12,9 @@ namespace CybergrindMusicExplorer.Components
 {
     public class EnhancedMusicPlayer : MonoBehaviour
     {
-        private readonly CybergrindMusicExplorerManager manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
-        private readonly OptionsManager optionsManager = MonoSingleton<OptionsManager>.Instance;
+        private readonly CybergrindMusicExplorerManager manager = CybergrindMusicExplorerManager.Instance;
+        private readonly MusicManager musicManager = MusicManager.Instance;
+        private readonly OptionsManager optionsManager = OptionsManager.Instance;
 
         private PlaybackWindow playback;
         
@@ -46,7 +47,7 @@ namespace CybergrindMusicExplorer.Components
 
             playlistEditor = CybergrindMusicExplorer.GetEnhancedPlaylistEditor();
             playback = GUIManager.GUIDeployer.playbackWindow.AddComponent<PlaybackWindow>();
-            playback.OnSongSelected += ChangeSong;
+            playback.OnSongSelected += ChangeSongIndex;
 
             Destroy(FindObjectOfType<CustomMusicPlayer>());
         }
@@ -57,7 +58,7 @@ namespace CybergrindMusicExplorer.Components
         {
             if (playlistEditor.Playlist.Count < 1)
                 Debug.LogError(
-                    "[CybergrindMusicExplorer] No songs in playlist, somehow. Not starting playlist routine...");
+                    "No songs in playlist, somehow. Not starting playlist routine...");
             else
                 StartCoroutine(PlaylistRoutine());
         }
@@ -71,7 +72,7 @@ namespace CybergrindMusicExplorer.Components
             var time = 0.0f;
             while (time < (double)panelApproachTime)
             {
-                time += Time.deltaTime;
+                time += Time.unscaledDeltaTime;
                 panelGroup.alpha = time / panelApproachTime;
                 yield return null;
             }
@@ -86,7 +87,7 @@ namespace CybergrindMusicExplorer.Components
             time = panelApproachTime;
             while (time > 0.0)
             {
-                time -= Time.deltaTime;
+                time -= Time.unscaledDeltaTime;
                 panelGroup.alpha = time / panelApproachTime;
                 yield return null;
             }
@@ -99,12 +100,12 @@ namespace CybergrindMusicExplorer.Components
             IEnumerator currentSubtitlesRoutine = default;
             currentTrackPosition = 0;
 
-            var themeNotPlaying = new WaitUntil(() =>
-                Application.isFocused && !MonoSingleton<MusicManager>.Instance.targetTheme.isPlaying && !stopped || nextTrack);
+            var themeNotPlaying = new WaitUntil(() => Application.isFocused
+                && TrackHasReachedTheEnd(musicManager.targetTheme) && !stopped || nextTrack);
             var first = true;
             var playlist = playlistEditor.Playlist;
 
-            Playlist.SongData lastSong = null;
+            CustomSongData lastSong = null;
 
             var shuffled = playlist.shuffled
                 ? (IEnumerable<TrackReference>)new DeckShuffled<TrackReference>(playlist.References)
@@ -128,9 +129,10 @@ namespace CybergrindMusicExplorer.Components
                     playback.ChangeCurrent(currentTrackPosition);
                     if (currentSubtitlesRoutine != default)
                         StopCoroutine(currentSubtitlesRoutine);
-                    
+
                     playlistEditor.Playlist.GetSongData(reference, out var currentSong);
-                    Debug.Log($"[CybergrindMusicExplorer] Now playing {currentSong.name}");
+
+                    Debug.Log($"Now playing {currentSong.name}");
 
                     // Only allow boosting for custom tracks
                     manager.allowMusicBoost = reference.Type == SoundtrackType.External;
@@ -144,7 +146,16 @@ namespace CybergrindMusicExplorer.Components
                             currentSubtitlesRoutine = SubtitlesRoutine(reference, 0);
                             StartCoroutine(currentSubtitlesRoutine);
                             
-                            changer.ChangeTo(currentSong.introClip);
+                            if (currentSong.CalmIntroClip != null)
+                            {
+                                musicManager.bossTheme = musicManager.battleTheme;
+                                ChangeMusic(currentSong.introClip, currentSong.CalmIntroClip);
+                            }
+                            else
+                            {
+                                musicManager.bossTheme = musicManager.cleanTheme;
+                                changer.ChangeTo(currentSong.introClip);
+                            }
                             yield return themeNotPlaying;
                         }
 
@@ -159,7 +170,18 @@ namespace CybergrindMusicExplorer.Components
                         {
                             currentSubtitlesRoutine = SubtitlesRoutine(reference, currentSong.introClip == null ? j : j + 1);
                             StartCoroutine(currentSubtitlesRoutine);
-                            changer.ChangeTo(currentSong.clips[j]);
+
+                            if (currentSong.CalmLoopClip != null)
+                            {
+                                musicManager.bossTheme = musicManager.battleTheme;
+                                ChangeMusic(currentSong.clips[j], currentSong.CalmLoopClip);
+                            }
+                            else
+                            {
+                                musicManager.bossTheme = musicManager.cleanTheme;
+                                changer.ChangeTo(currentSong.clips[j]);
+                            }
+
                             ++i;
                             yield return themeNotPlaying;
                         }
@@ -175,11 +197,23 @@ namespace CybergrindMusicExplorer.Components
                 yield return null;
             }
         }
+        private void ChangeMusic(AudioClip battleTheme, AudioClip calmTheme = null)
+         {
+             changer.clean = calmTheme;
+             changer.battle = battleTheme;
+             changer.boss = battleTheme;
+             changer.Change();
+         }
+         
+        private static bool TrackHasReachedTheEnd(AudioSource source) =>
+            source != null 
+            && !source.isPlaying
+            && source.time == 0.0f;
 
-        private void ChangeSong(int position)
+        private void ChangeSongIndex(int position)
         {
             currentTrackPosition = position;
-            changer.ChangeTo(null);
+            nextTrack = true;
         }
         
         private IEnumerator SubtitlesRoutine(TrackReference reference, int clip)

@@ -17,6 +17,7 @@ namespace CybergrindMusicExplorer.Components
     public class EnhancedMusicBrowser : DirectoryTreeBrowser<TrackReference>
     {
         private const string BaseCanvasPath = "/FirstRoom/Room/CyberGrindSettings/Canvas/SoundtrackMusic/Panel/";
+        private readonly CybergrindMusicExplorerManager manager = CybergrindMusicExplorerManager.Instance;
         
         public static event Action OnInit;
 
@@ -67,50 +68,36 @@ namespace CybergrindMusicExplorer.Components
                 });
             tracksLoader = new TracksLoader(defaultIcon);
 
-            // TODO: Not ideal, but will do for now
             SetPrivate(this, typeof(DirectoryTreeBrowser<TrackReference>), "currentDirectory", baseDirectory);
             OnInit?.Invoke();
         }
 
         private void OnEnable() => Rebuild();
 
-        private IDirectoryTree<TrackReference> OstFolder()
-        {
-            return Folder("OST", children: levelFolders
+        private IDirectoryTree<TrackReference> OstFolder() => 
+            Folder("OST", children: levelFolders
                 .Select(f => new FakeDirectoryTree<TrackReference>(f.name, f.songs
                     .Select(s => new TrackReference(SoundtrackType.Asset, s.AssetGUID))
                     .ToList()))
                 .Cast<IDirectoryTree<TrackReference>>()
                 .ToList());
-        }
 
-        private IDirectoryTree<TrackReference> CustomSongsFolder()
-        {
-            return TraverseFileTree(customSongsDirectory, "Custom tracks");
-        }
+        private IDirectoryTree<TrackReference> CustomSongsFolder() => 
+            TraverseFileTree(customSongsDirectory, "Custom tracks");
 
-        private void SelectSong(TrackReference reference, SoundtrackSong song)
+        private void SelectSong(TrackReference reference, CustomSongData song)
         {
             if (song.clips.Count > 0)
             {
-                var target = playlistEditor.PageOf(playlistEditor.Playlist.Count);
-                playlistEditor.Playlist.AddTrack(reference, song);
-                playlistEditor.Rebuild(false);
-                playlistEditor.SetPage(target);
-                navigator.GoToNoMenu(playlistEditorPanel);
-            }
-            else
-                Debug.LogWarning("Attempted to add song with no clips to playlist.");
-        }
+                if (manager.PreventDuplicateTracks && playlistEditor.Playlist.References.Contains(reference))
+                    Debug.Log("Attempted to add duplicate track, ignoring.");
+                else {
+                    var target = playlistEditor.PageOf(playlistEditor.Playlist.Count);
+                    playlistEditor.Playlist.AddTrack(reference, song);
+                    playlistEditor.Rebuild(false);
+                    playlistEditor.SetPage(target);
+                }
 
-        private void SelectSong(TrackReference reference, Playlist.SongData song)
-        {
-            if (song.clips.Count > 0)
-            {
-                var target = playlistEditor.PageOf(playlistEditor.Playlist.Count);
-                playlistEditor.Playlist.AddTrack(reference, song);
-                playlistEditor.Rebuild(false);
-                playlistEditor.SetPage(target);
                 navigator.GoToNoMenu(playlistEditorPanel);
             }
             else
@@ -126,13 +113,11 @@ namespace CybergrindMusicExplorer.Components
             {
                 case SoundtrackType.Asset:
                 {
-                    SoundtrackSong song = null;
+                    CustomSongData song = null;
                     yield return tracksLoader.LoadSongData(reference, data => song = data);
-
-                    if (btn == null)
-                        yield break;
-
+                    
                     Destroy(placeholder);
+
                     if (song != null)
                         DrawOstButton(song, reference, btn);
 
@@ -140,7 +125,7 @@ namespace CybergrindMusicExplorer.Components
                 }
                 case SoundtrackType.External:
                 {
-                    Playlist.SongData song = null;
+                    CustomSongData song = null;
                     yield return LoadSongDataAndSubtitles(reference, data => song = data);
                     
                     Destroy(placeholder);
@@ -151,7 +136,7 @@ namespace CybergrindMusicExplorer.Components
                 }
                 default:
                     Debug.LogError(
-                        $"[CybergrindMusicExplorer] Trying to load unknown soundtrack reference={reference.Reference}, type {reference.Type}, ignoring");
+                        $"Trying to load unknown soundtrack reference={reference.Reference}, type {reference.Type}, ignoring");
                     break;
             }
         }
@@ -160,9 +145,10 @@ namespace CybergrindMusicExplorer.Components
         {
             foreach (var reference in folder.GetFilesRecursive())
             {
-                Playlist.SongData data = null;
+                CustomSongData data = null;
                 yield return StartCoroutine(LoadSongDataAndSubtitles(reference, song => data = song));
-                playlistEditor.Playlist.AddTrack(reference, data);
+                if (!manager.PreventDuplicateTracks || !playlistEditor.Playlist.References.Contains(reference))
+                    playlistEditor.Playlist.AddTrack(reference, data);
             }
             
             playlistEditor.Rebuild();
@@ -175,9 +161,9 @@ namespace CybergrindMusicExplorer.Components
             onPressed.Invoke();
         }
 
-        private IEnumerator LoadSongDataAndSubtitles(TrackReference reference, Action<Playlist.SongData> callback)
+        private IEnumerator LoadSongDataAndSubtitles(TrackReference reference, Action<CustomSongData> callback)
         {
-            Playlist.SongData song = null;
+            CustomSongData song = null;
             List<List<SubtitleItem>> subtitles = default;
             var fileInfo = new FileInfo(Path.Combine(CustomSongsPath, reference.Reference));
             yield return tracksLoader.LoadSongData(fileInfo, data => song = data, subs => subtitles = subs);
@@ -188,7 +174,7 @@ namespace CybergrindMusicExplorer.Components
             callback.Invoke(song);
         }
 
-        public void DrawOstButton(SoundtrackSong song, TrackReference reference, GameObject button)
+        public void DrawOstButton(CustomSongData song, TrackReference reference, GameObject button)
         {
             var componentInChildren = button.GetComponentInChildren<CustomContentButton>();
             componentInChildren.button.onClick.RemoveAllListeners();
@@ -196,7 +182,7 @@ namespace CybergrindMusicExplorer.Components
             {
                 componentInChildren.icon.sprite = song.icon != null ? song.icon : defaultIcon;
                 componentInChildren.text.text =
-                    song.songName.ToUpper() + " <color=grey>" + song.extraLevelBit + "</color>";
+                    song.name.ToUpper();
                 componentInChildren.costText.text = "<i>UNLOCKED</i>";
                 componentInChildren.button.onClick.AddListener(() => SelectSong(reference, song));
                 SetActiveAll(componentInChildren.objectsToActivateIfAvailable, true);
@@ -215,7 +201,7 @@ namespace CybergrindMusicExplorer.Components
             }
         }
 
-        public void DrawCustomTrackButton(Playlist.SongData song, TrackReference reference, GameObject button)
+        public void DrawCustomTrackButton(CustomSongData song, TrackReference reference, GameObject button)
         {
             var componentInChildren = button.GetComponentInChildren<CustomContentButton>();
             componentInChildren.button.onClick.RemoveAllListeners();
@@ -250,7 +236,6 @@ namespace CybergrindMusicExplorer.Components
             textComponent.fontSize = 16;
             
             loadAllButton.name = "Load All";
-
             loadAllButton.GetComponent<Button>().onClick.RemoveAllListeners();
         }
 
@@ -300,12 +285,15 @@ namespace CybergrindMusicExplorer.Components
                 .ToList();
 
             var segmentedTracks = tracks
-                .Where(HasSpecialPostfix)
+                .Where(IntroOrLoopPart)
                 .GroupBy(file => WithoutPostfix(file).FullName)
                 .Where(HasIntroAndLoop)
                 .ToList();
 
             var regularTracks = tracks
+                .Where(track => !HasSpecialPostfix(track, "calmintro")
+                                && !HasSpecialPostfix(track, "calmloop")
+                                && !HasSpecialPostfix(track, "calm"))
                 .Select(track => track.FullName)
                 .Where(track => !segmentedTracks
                     .SelectMany(t => t)

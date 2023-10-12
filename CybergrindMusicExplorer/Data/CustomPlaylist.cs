@@ -40,7 +40,7 @@ namespace CybergrindMusicExplorer.Data
             set => SetPrivate(this, typeof(Playlist), "_loopMode", value);
         }
 
-        protected Dictionary<TrackReference, SongData> LoadedSongDict = new Dictionary<TrackReference, SongData>();
+        protected Dictionary<TrackReference, CustomSongData> LoadedSongDict = new Dictionary<TrackReference, CustomSongData>();
         
         protected Dictionary<TrackReference, List<List<SubtitleItem>>> SubtitlesDict = new Dictionary<TrackReference, List<List<SubtitleItem>>>();
 
@@ -48,20 +48,20 @@ namespace CybergrindMusicExplorer.Data
 
         public bool IsSongLoaded(TrackReference reference) => LoadedSongDict.ContainsKey(reference);
 
-        public bool GetSongData(TrackReference reference, out SongData data) =>
+        public bool GetSongData(TrackReference reference, out CustomSongData data) =>
             LoadedSongDict.TryGetValue(reference, out data);
 
         public bool GetSubtitles(TrackReference reference, out List<List<SubtitleItem>> subtitles) =>
             SubtitlesDict.TryGetValue(reference, out subtitles);
         
-        public void AddTrack(TrackReference reference, SoundtrackSong song)
+        public void AddOriginalTrack(TrackReference reference, SoundtrackSong song)
         {
             AddTrack(reference,
-                new SongData(song.songName + " <color=grey>" + song.extraLevelBit + "</color>", song.icon,
-                    song.introClip, song.clips, song.maxClipsIfNotRepeating));
+                new CustomSongData(song.songName + " <color=grey>" + song.extraLevelBit + "</color>", song.icon,
+                    song.introClip, song.clips, song.maxClipsIfNotRepeating, null, null));
         }
         
-        public void AddTrack(TrackReference reference, SongData song)
+        public void AddTrack(TrackReference reference, CustomSongData song)
         {
             if (song == null)
             {

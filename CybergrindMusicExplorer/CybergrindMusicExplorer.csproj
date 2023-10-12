@@ -49,20 +49,35 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="AssetsManager.cs" />
+        <Compile Include="Components\CalmThemeManager.cs" />
         <Compile Include="Components\CybergrindEffectsChanger.cs" />
         <Compile Include="Components\EnhancedMusicPlayer.cs" />
         <Compile Include="Components\PlaybackWindow.cs" />
+        <Compile Include="Components\SpecialEnemies.cs" />
         <Compile Include="Components\SubtitlesManager.cs" />
         <Compile Include="Components\TracksLoader.cs" />
+        <Compile Include="Components\UpdatesManager.cs" />
         <Compile Include="CybergrindMusicExplorer.cs" />
         <Compile Include="CybergrindMusicExplorerManager.cs" />
+        <Compile Include="Data\CgmePreferences.cs" />
         <Compile Include="Data\CustomPlaylist.cs" />
+        <Compile Include="Data\CustomSongData.cs" />
         <Compile Include="Data\CustomTrackMetadata.cs" />
+        <Compile Include="Data\GitHubLatest.cs" />
         <Compile Include="Data\TrackReference.cs" />
         <Compile Include="Data\SoundtrackType.cs" />
-        <Compile Include="GUI\Controllers\CGMEBindingsController.cs" />
+        <Compile Include="GUI\Attributes\HudEffect.cs" />
+        <Compile Include="GUI\Attributes\PrefabAsset.cs" />
+        <Compile Include="GUI\Attributes\UIElement.cs" />
+        <Compile Include="GUI\Controllers\CgmeMenuController.cs" />
+        <Compile Include="GUI\Controllers\UIController.cs" />
+        <Compile Include="GUI\Elements\ControlBinding.cs" />
+        <Compile Include="GUI\Elements\Counter.cs" />
+        <Compile Include="GUI\Elements\CounterButton.cs" />
+        <Compile Include="GUI\Elements\SliderWithValue.cs" />
+        <Compile Include="GUI\Elements\UICustomElement.cs" />
         <Compile Include="GUI\GUIManager.cs" />
-        <Compile Include="GUI\GUIDeployer.cs" />
+        <Compile Include="GUI\CgmeMenuDeployer.cs" />
         <Compile Include="Patches\AudioMixerControllerPatch.cs" />
         <Compile Include="Patches\CustomMusicPlayerPatch.cs" />
         <Compile Include="Components\EnhancedMusicBrowser.cs" />
@@ -85,6 +100,7 @@
         <Compile Include="Util\ReflectionUtils.cs" />
     </ItemGroup>
     <ItemGroup>
+        <Reference Include="System.Net.Http" />
         <Reference Include="0Harmony">
             <HintPath>$(BepInExCoreDir)0Harmony.dll</HintPath>
         </Reference>
