@@ -181,7 +181,6 @@ namespace CybergrindMusicExplorer.Components
                                 musicManager.bossTheme = musicManager.cleanTheme;
                                 changer.ChangeTo(currentSong.clips[j]);
                             }
-
                             ++i;
                             yield return themeNotPlaying;
                         }
@@ -204,11 +203,11 @@ namespace CybergrindMusicExplorer.Components
              changer.boss = battleTheme;
              changer.Change();
          }
-         
+
         private static bool TrackHasReachedTheEnd(AudioSource source) =>
-            source != null 
-            && !source.isPlaying
-            && source.time == 0.0f;
+            source != null
+            && source.time == 0.0f
+            && !source.isPlaying;
 
         private void ChangeSongIndex(int position)
         {

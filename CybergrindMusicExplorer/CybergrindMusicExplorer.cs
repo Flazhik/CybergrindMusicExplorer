@@ -4,7 +4,9 @@ using System.IO;
 using System.Threading.Tasks;
 using BepInEx;
 using CybergrindMusicExplorer.Components;
+using CybergrindMusicExplorer.Downloader;
 using CybergrindMusicExplorer.GUI;
+using CybergrindMusicExplorer.Util;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static CybergrindMusicExplorer.Patches.Patches;
@@ -18,12 +20,14 @@ namespace CybergrindMusicExplorer
     public class CybergrindMusicExplorer : BaseUnityPlugin
     {
         private static Version _newestVersion = new Version("1.0.0");
-        
+        private const string SuitableUltrakillVersion = "3.3";
+
         private static EnhancedMusicPlaylistEditor _editor;
         private EnhancedMusicBrowser browser;
         private GameObject cybergrindMusicExplorerSettings;
         private GUIManager GUIManager;
         private CybergrindEffectsChanger cybergrindEffectsChanger;
+        private TracksDownloadManager tracksDownloadManager;
         private bool menuMessageIsShown;
 
         public static EnhancedMusicPlaylistEditor GetEnhancedPlaylistEditor()
@@ -35,6 +39,9 @@ namespace CybergrindMusicExplorer
 
         private void Awake()
         {
+            if (Application.version != SuitableUltrakillVersion)
+                return;
+            
             Logger.LogInfo("Initializing Cybergrind Music Explorer");
             StartCoroutine(Startup());
             
@@ -47,6 +54,7 @@ namespace CybergrindMusicExplorer
             SceneManager.sceneLoaded += (scene, mode) => StartCoroutine(OnSceneLoaded(scene, mode));
             GUIManager.Init();
             cybergrindEffectsChanger = CybergrindEffectsChanger.Instance;
+            tracksDownloadManager = TracksDownloadManager.Instance;
             UpdateNote();
             #pragma warning disable CS4014
             RetrieveNewestVersion();
@@ -92,6 +100,7 @@ namespace CybergrindMusicExplorer
             var musicObject = oldBrowser.transform.gameObject;
             browser = musicObject.AddComponent<EnhancedMusicBrowser>();
             Destroy(oldBrowser);
+            ClearTmpDirectory();
             yield return new WaitForSeconds(2.5f);
             DisplayMenuMessage();
         }
@@ -111,6 +120,24 @@ namespace CybergrindMusicExplorer
         {
             _editor = FindObjectOfType<EnhancedMusicPlaylistEditor>();
             PatchMusicPlayer();
+        }
+
+        private static void ClearTmpDirectory()
+        {
+            if (!PathsUtils.TemporaryFilesDirectory.Exists)
+                return;
+            
+            foreach (var fileInfo in PathsUtils.TemporaryFilesDirectory.GetFiles())
+            {
+                try
+                {
+                    fileInfo.Delete();
+                }
+                catch (Exception)
+                {
+                    Debug.LogWarning($"Can't delete temporary file {fileInfo.Name}");
+                }
+            }
         }
 
         private static async Task RetrieveNewestVersion()

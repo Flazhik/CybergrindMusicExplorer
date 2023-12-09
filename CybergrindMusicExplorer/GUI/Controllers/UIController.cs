@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using CybergrindMusicExplorer.GUI.Attributes;
 using CybergrindMusicExplorer.GUI.Elements;
 using UnityEngine;
 using UnityEngine.UI;
@@ -111,6 +112,10 @@ namespace CybergrindMusicExplorer.GUI.Controllers
 
             if (field.GetCustomAttribute<HudEffect>() != null)
                 t.gameObject.AddComponent<HudOpenEffect>();
+            
+            var componentTag = field.GetCustomAttribute<CustomComponent>();
+            if (componentTag != null)
+                t.gameObject.AddComponent(componentTag.ComponentType);
         }
 
         private void OnGUI()

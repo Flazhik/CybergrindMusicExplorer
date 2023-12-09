@@ -1,12 +1,19 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using CybergrindMusicExplorer.Components;
+using CybergrindMusicExplorer.Downloader;
+using CybergrindMusicExplorer.GUI.Attributes;
 using CybergrindMusicExplorer.GUI.Elements;
+using CybergrindMusicExplorer.Scripts;
+using CybergrindMusicExplorer.Scripts.Data;
 using UnityEngine;
 using UnityEngine.UI;
 using static ControlsOptions;
+using static CybergrindMusicExplorer.Util.VersionUtils;
+using Debug = UnityEngine.Debug;
 
 namespace CybergrindMusicExplorer.GUI.Controllers
 {
@@ -18,17 +25,17 @@ namespace CybergrindMusicExplorer.GUI.Controllers
         private readonly PrefsManager prefsManager = PrefsManager.Instance;
         private readonly OptionsMenuToManager optionsManager = OptionsMenuToManager.Instance;
         private readonly AudioMixerController mixer = AudioMixerController.Instance;
+        private readonly TracksDownloadManager tracksDownloadManager = TracksDownloadManager.Instance;
         private CalmThemeManager calmThemeManager;
 
         [PrefabAsset("assets/ui/elements/enemycounter.prefab")]
         private static GameObject enemyCounterPrefab;
 
         [HudEffect] [UIElement("Header/Tab")] private GameObject tabName;
-        [HudEffect] [UIElement("Menu/General")]
-        private GameObject general;
-        [HudEffect] [UIElement("Menu/Bindings")]
-        private GameObject bindings;
+        [HudEffect] [UIElement("Menu/General")] private GameObject general;
+        [HudEffect] [UIElement("Menu/Bindings")] private GameObject bindings;
         [HudEffect] [UIElement("Menu/Themes")] private GameObject themes;
+        [HudEffect] [UIElement("Menu/Downloader")] private TracksDownloader tracksDownloader;
         [HudEffect] [UIElement("Menu/Manual")] private GameObject manual;
         [HudEffect] [UIElement("Menu/Credits")] private GameObject credits;
         [UIElement("Menu/General/InfinitePanel/Controller/Checkbox")]
@@ -58,6 +65,8 @@ namespace CybergrindMusicExplorer.GUI.Controllers
         [UIElement("Version")] private Text version;
         [UIElement("Close")] private Button close;
 
+        private Coroutine downloaderCoroutine;
+
         private new void Awake()
         {
             base.Awake();
@@ -75,6 +84,7 @@ namespace CybergrindMusicExplorer.GUI.Controllers
             BindControls();
             BindHotkeys();
             SetupThemes();
+            SetupDownloader();
             SetupSpecialEnemiesControls();
             HandleCurrentVersion();
         }
@@ -128,6 +138,59 @@ namespace CybergrindMusicExplorer.GUI.Controllers
             enemiesThreshold.OnChanged += newValue => Manager.CalmThemeEnemiesThreshold = newValue;
         }
 
+        private void SetupDownloader()
+        {
+            tracksDownloader.SetDownloadCallback((entry, downloader) => tracksDownloadManager.Download(entry, downloader));
+            
+            tracksDownloader.SetDownloadAllCallback((entries, downloader) =>
+                tracksDownloadManager.DownloadAll(entries.Where(e => e.State == DownloadableTrackEntryState.Idle).ToList(), downloader));
+
+            tracksDownloader.URLChanged += url =>
+            {
+                tracksDownloadManager.Cancel();
+                if (!tracksDownloadManager.SupportsUrl(url))
+                {
+                    tracksDownloader.DisplayMessage("URL is invalid or not supported");
+                    return;
+                }
+
+                tracksDownloader.LoadingStarted();
+                
+                if (downloaderCoroutine != null)
+                    StopCoroutine(downloaderCoroutine);
+                
+                downloaderCoroutine = StartCoroutine(OnUrlChangedCoroutine(url));
+            };
+            tracksDownloader.restartButton.GetComponent<Button>().onClick.AddListener(SceneHelper.RestartScene);
+        }
+
+        private IEnumerator OnUrlChangedCoroutine(string url)
+        {
+            tracksDownloader.HideDownloadAllButton();
+            if (!tracksDownloadManager.SupportsUrl(url))
+            {
+                tracksDownloader.DisplayMessage("URL is invalid or not supported");
+                yield break;
+            }
+            tracksDownloader.LoadingStarted();
+
+            var metadataList = new List<DownloadableTrackMetadata>();
+            yield return tracksDownloadManager.GetMetadata(url, metadata =>
+            {
+                try
+                {
+                    metadataList.Add(metadata);
+                    tracksDownloader.AddEntry(metadata);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"An error has occured while receiving metadata for URL {url}: {e.Message}");
+                }
+            }, tracksDownloader);
+            
+            tracksDownloader.LoadingComplete();
+        }
+
         private void SetupSpecialEnemiesControls()
         {
             var sprites = SpecialEnemies.LoadEnemiesSprites();
@@ -168,12 +231,12 @@ namespace CybergrindMusicExplorer.GUI.Controllers
             if (newestVersion > currentVersion)
             {
                 var stringVersion = newestVersion.ToString(3);
-                var a = R2ModmanIsRunning()
+                var downloadOption = R2ModmanIsRunning()
                     ? "Update via r2modman or from:"
                     : "Click to download from:";
                 
                 version.text =
-                    $"<color=#a8a8a8>Version {stringVersion} is available! {a}</color>\n" +
+                    $"<color=#a8a8a8>Version {stringVersion} is available! {downloadOption}</color>\n" +
                     "<color=#3498db>Thunderstore</color> <color=#a8a8a8>|</color> <color=#f5f5f5>GitHub</color>";
 
                 thunderDownload.gameObject.SetActive(true);
@@ -189,9 +252,10 @@ namespace CybergrindMusicExplorer.GUI.Controllers
             }
 
             version.text = $"<color=#545454>Version {currentVersion.ToString(3)}</color>";
+            if (!ComicallyOldVersion.Equals(newestVersion) && currentVersion > newestVersion)
+                version.text += " <color=#888>[beta]</color>";
         }
-        private void ChangeTabName(string newName) => tabName.GetComponent<Text>().text = $"-- {newName} --";
-        
+
         private static void DownloadNewestVersion(string url) => Process.Start(url);
 
         private static bool R2ModmanIsRunning() => Process.GetProcessesByName("r2modman").Length > 0;

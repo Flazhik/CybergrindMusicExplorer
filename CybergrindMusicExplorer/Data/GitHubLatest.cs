@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CybergrindMusicExplorer.Data
 {
@@ -28,10 +29,7 @@ namespace CybergrindMusicExplorer.Data
                     : OldVersion;
             }
 
-            public override bool CanConvert(Type objectType)
-            {
-                return false;
-            }
+            public override bool CanConvert(Type objectType) => false;
         }
     }
 }

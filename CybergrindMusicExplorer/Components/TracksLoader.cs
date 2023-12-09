@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CybergrindMusicExplorer.Data;
+using CybergrindMusicExplorer.Util;
 using SubtitlesParser.Classes;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -216,11 +217,11 @@ namespace CybergrindMusicExplorer.Components
                    UnityWebRequestMultimedia.GetAudioClip("file:///" + UnityWebRequest.EscapeURL(path), audioType))
             {
                 ((DownloadHandlerAudioClip)request.downloadHandler).streamAudio = async;
-                yield return request.SendWebRequest();
-
-                while (async ? request.downloadedBytes < 1024 : !request.isDone)
+                request.SendWebRequest();
+                
+                while (!request.isDone || request.error != null)
                     yield return null;
-
+                
                 if (request.error != null)
                 {
                     Debug.LogError(request.error);
@@ -230,6 +231,9 @@ namespace CybergrindMusicExplorer.Components
                 try
                 {
                     audioClip = ((DownloadHandlerAudioClip)request.downloadHandler).audioClip;
+                    
+                    if (audioClip.channels != 0)
+                        callback(audioClip);
                 }
                 catch (Exception)
                 {
@@ -246,11 +250,8 @@ namespace CybergrindMusicExplorer.Components
                 if (request.error != null)
                 {
                     Debug.LogError("Unexpected error, can't download AudioClip path=[{path}].");
-                    yield break;
                 }
             }
-
-            callback(audioClip);
         }
     }
 }

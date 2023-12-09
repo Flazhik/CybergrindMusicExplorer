@@ -1,5 +1,4 @@
 using System.IO;
-using TagLib;
 using UnityEngine;
 using File = TagLib.File;
 
@@ -25,11 +24,11 @@ namespace CybergrindMusicExplorer.Data
             Sprite logo = null;
             if (tags.Pictures.Length > 0)
             {
-                IPicture pic = tags.Pictures[0];
-                MemoryStream ms = new MemoryStream(pic.Data.Data);
+                var pic = tags.Pictures[0];
+                var ms = new MemoryStream(pic.Data.Data);
                 ms.Seek(0, SeekOrigin.Begin);
 
-                Texture2D tex = new Texture2D(2, 2);
+                var tex = new Texture2D(2, 2);
                 tex.LoadImage(ms.ToArray());
 
                 logo = Sprite.Create(tex, new Rect(0.0f, 0.0f, tex.width, tex.height),

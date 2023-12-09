@@ -3,21 +3,39 @@
 
 # Custom Cyber Grind Music Explorer
 
-### Add your custom tracks in Cyber Grind playlist and have a complete control over the playback.
+### Download and add your custom tracks in Cyber Grind playlist and have a complete control over the playback
 
 ![CGME](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/63593445-8bea-43b5-87eb-1cd7e00ed527)
 
 ## Disclaimer
 
 Custom music in Cyber Grind playlist is an upcoming feature of ULTRAKILL, so you can use this mod until custom tracks are officially supported.
-#### It doesn't interfere with leaderboards and doesn't alter your gameplay in any way apart from custom music.
+#### It doesn't interfere with leaderboards and doesn't alter your gameplay in any way apart from custom music: your score will be saved
 This mod does not affect the folder with original soundtrack, so you can combine it with your custom tracks.
+
+## [09-12-2023] Violence layer update statement
+
+Most likely CyberGrind is going to officially support custom tracks by the end of the year.
+
+The initial purpose of this mod was exactly that, so it'll become obsolete in that sense by the end of the year.
+
+However, for the last 6 months I've been adding extra features in order to make CG experience as customisable and pleasant as I can (including volume boost, calm themes, intros and loops, downloader, things like that) and I'm not planning to stop since the mod has become much more than just custom tracks support, and I'll continue to work in that direction.
+
+Once the custom tracks support is released, and in case you want to stick with the official part of the functionality, it'll be up to you and I hope you've enjoyed the mod!
+
+### However, in case you're willing to continue using CGME, please note the following:
+
+1. It's guaranteed that firstly an official support will completely break CGME functionality. It's going to take some time for me to fix it, and because of that, I ensured the mod will disable itself with the following update. If you're using a version older than 1.6.0, you're going to have to disable it yourself
+2. When the time comes, I'll adapt the mod and will release the suitable 1.7.0 version as soon as I can. But until then, you're going to have to wait for the announcement
+
+Again, it will not stop me from developing the mod, and I'll get back to you with updates soon!
 
 - [Installation](#installation)
 - [How to use](#using-the-mod)
 - [Mod settings](#settings)
 - Additional Features
   - [Playback menu](#playback-menu)
+  - [Downloader](#downloader)
   - [Calm & Battle themes](#calm-and-battle-themes)
   - [Segmented tracks](#segmented-tracks)
   - [Effects replacement](#effects-replacement)
@@ -31,7 +49,7 @@ This mod does not affect the folder with original soundtrack, so you can combine
 2. Extract the contents of **BepInEx** archive in your local **ULTRAKILL** folder. If you're not sure where this folder
    is located, find **ULTRAKILL** in your Steam Library > Right mouse click > **Properties** > **Local files** > **Browse**
 3. Download the CybergrindMusicExplorer
-   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.5.0/CybergrindMusicExplorer.v1.5.0.zip), then
+   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.6.0/CybergrindMusicExplorer.v1.6.0.zip), then
    extract its contents at **ULTRAKILL/BepInEx/plugins** (create *plugins* folder manually in case it's missing)
     
 You can also use r2modman for that. Both methods are described in the video below (click to open):
@@ -63,6 +81,30 @@ For other settings like key bindings and Themes, use the respective tab.
 Allows you to switch between the tracks mid-game. Available by pressing **Tab** by default.
 
 If the whole menu is an overkill for you, just switch between tracks using **Next track** hotkey.
+
+## Downloader
+![Downloader window](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/7d9974e5-48f5-43d7-805a-97320a48412a)
+![YouCloud](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/439727a4-8220-4cac-ba8f-4b772fbc951c)
+
+You can now download tracks directly from **YouTube** and **SoundCloud**.
+
+Downloader section supports both playlists and individual tracks URLs. All you have to do is to paste track/playlist URL in the input field and download each track individually or download every track of playlist at once.
+Downloaded tracks will be placed inside **_ULTRAKILL/Cybergrind/Music_** directory in _**YouTube**_ and _**SoundCloud**_ folders.
+
+**Note that you'll have to restart CyberGrind in order for tracks to appear in Terminal!**
+
+### **N.B.!**
+
+This feature uses ffmpeg. It's a 3rd-party library which you'll be offered to download automatically from the official source. You're at liberty not to do it, but in this case Downloader functionality won't be available to you.
+ffmpeg executables will be placed within the folder where **CybergrindMusicExplorer.dll** is located.
+
+Please also note that this feature is in early stage of development and may not work consistently.
+
+**Known issues:**
+- If you faced an issue where track is seemingly missing at the provided URL when it shouldn't be, refresh the list by pasting URL once again or restart CyberGrind
+- Some videos e.g. the ones that contain self harm topics may not be available for downloading
+- **Download all** process may stall, in this case please download the rest of the tracks manually or restart CyberGrind and try again
+- Only 100 first tracks are available if your trying to download YouTube playlist
 
 ## Calm and battle themes
 
@@ -153,3 +195,7 @@ Created by [Flazhik](https://github.com/Flazhik)
 #### Cyber Grind Music Explorer uses following libraries:
 - [TagLibSharp](https://github.com/mono/taglib-sharp) - Licensed under [LGPL-2.1](https://github.com/mono/taglib-sharp/blob/main/COPYING)
 - [SubtitlesParser](https://github.com/AlexPoint/SubtitlesParser) - by [AlexPoint](https://github.com/AlexPoint), licensed under [MIT License](https://github.com/AlexPoint/SubtitlesParser/blob/master/LICENSE)
+- [Xabe.FFmpeg](https://github.com/tomaszzmuda/Xabe.FFmpeg) - licensed under [CC BY-NC-SA 3.0](https://ffmpeg.xabe.net/license.html) for non-commercial use
+
+#### Extras:
+For SoundCloud support, client_id was borrowed from [SoundCloudExplode](https://github.com/jerry08/SoundCloudExplode) by [jerry08](https://github.com/jerry08), licensed under [MIT License](https://github.com/jerry08/SoundCloudExplode/blob/master/LICENSE.txt)

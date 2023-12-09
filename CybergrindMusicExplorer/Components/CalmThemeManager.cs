@@ -5,7 +5,7 @@ using System.Linq;
 using CybergrindMusicExplorer.Data;
 using Newtonsoft.Json;
 using UnityEngine;
-using static CybergrindMusicExplorer.Util.PathsUtil;
+using static CybergrindMusicExplorer.Util.PathsUtils;
 
 namespace CybergrindMusicExplorer.Components
 {

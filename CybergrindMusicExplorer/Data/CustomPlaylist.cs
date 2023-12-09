@@ -99,15 +99,18 @@ namespace CybergrindMusicExplorer.Data
                 if (References.Count > 1)
                 {
                     References.RemoveAt(index);
-                    if (Changed == null)
-                        return;
-                    Changed();
+                    Changed?.Invoke();
                 }
                 else
                     Debug.LogWarning("Attempted to remove last song from playlist!");
             }
             else
                 Debug.LogWarning($"Attempted to remove index '{index}' from playlist, which is out of bounds.");
+        }
+
+        public void RemoveAll()
+        {
+            References.Clear();
         }
 
         public void Remove(TrackReference reference)

@@ -2,7 +2,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <Target Name="ILRepacker" AfterTargets="Build">
         <ItemGroup>
-            <InputAssemblies Include="$(TargetDir)\CybergrindMusicExplorer.dll" />
+            <InputAssemblies Include="$(TargetDir)CybergrindMusicExplorer.dll" />
+            <InputAssemblies Include="$(TargetDir)Xabe.FFmpeg.dll" />
             <InputAssemblies Include="$(SourceDir)lib\SubtitlesParser.dll" />
             <InputAssemblies Include="$(SourceDir)lib\TagLibSharp.dll" />
         </ItemGroup>
