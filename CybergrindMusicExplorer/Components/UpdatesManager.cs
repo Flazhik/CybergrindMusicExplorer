@@ -3,11 +3,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using CybergrindMusicExplorer.Data;
-using Newtonsoft.Json;
+using static System.TimeSpan;
+using static Newtonsoft.Json.JsonConvert;
 
 namespace CybergrindMusicExplorer.Components
 {
-    public class UpdatesManager
+    public static class UpdatesManager
     {
         private const string GitHubUrl =
             "https://api.github.com/repos/flazhik/cybergrindmusicexplorer/releases/latest";
@@ -22,11 +23,11 @@ namespace CybergrindMusicExplorer.Components
             try
             {
                 Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                Client.DefaultRequestHeaders.UserAgent.TryParseAdd("request");
-                Client.Timeout = TimeSpan.FromSeconds(5);
+                Client.DefaultRequestHeaders.UserAgent.TryParseAdd("CybergrindMusicExplorer/1.6.0");
+                Client.Timeout = FromSeconds(5);
 
                 var raw = await Client.GetStringAsync(GitHubUrl);
-                var latest = JsonConvert.DeserializeObject<GitHubLatest>(raw);
+                var latest = DeserializeObject<GitHubLatest>(raw);
                 NewestVersion = latest.Version;
             }
             catch (Exception e)

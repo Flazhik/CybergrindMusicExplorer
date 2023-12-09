@@ -4,13 +4,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CybergrindMusicExplorer.Data;
+using CybergrindMusicExplorer.GUI;
+using CybergrindMusicExplorer.Scripts.UI;
+using CybergrindMusicExplorer.Util;
 using SubtitlesParser.Classes;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using static CybergrindMusicExplorer.Util.ReflectionUtils;
 using static CybergrindMusicExplorer.Util.CustomTracksNamingUtil;
-using static CybergrindMusicExplorer.Util.PathsUtil;
+using static CybergrindMusicExplorer.Util.PathsUtils;
 
 namespace CybergrindMusicExplorer.Components
 {
@@ -23,7 +26,8 @@ namespace CybergrindMusicExplorer.Components
 
         public List<AssetReferenceSoundtrackSong> rootFolder = new List<AssetReferenceSoundtrackSong>();
         public List<SoundtrackFolder> levelFolders = new List<SoundtrackFolder>();
-
+        
+        private TerminalBrowserWindow browserWindow;
         private GameObject playlistEditorPanel;
         private CyberGrindSettingsNavigator navigator;
         private GameObject loadingPrefab;
@@ -60,19 +64,37 @@ namespace CybergrindMusicExplorer.Components
             RewireButtonTo(ControlButton("ImageSelectorWrapper/BackButton"), StepUp);
             InstantiateLoadAllButton();
 
+            SetBaseDirectory();
+            tracksLoader = new TracksLoader(defaultIcon);
+
+            SetPrivate(this, typeof(DirectoryTreeBrowser<TrackReference>), "currentDirectory", baseDirectory);
+            StartCoroutine(WaitForGui());
+        }
+
+        private IEnumerator WaitForGui()
+        {
+            yield return new WaitUntil(() => GUIManager.GUIDeployer != null && GUIManager.GUIDeployer.terminalBrowserWindow != null);
+            browserWindow = GUIManager.GUIDeployer.terminalBrowserWindow.GetComponent<TerminalBrowserWindow>();
+            OnInit?.Invoke();
+        }
+
+        private void OnEnable() => StartCoroutine(RebuildRoutine());
+
+        private IEnumerator RebuildRoutine()
+        {
+            yield return new WaitUntil(() => browserWindow != null);
+            Rebuild();
+        }
+        
+        private void SetBaseDirectory()
+        {
             _baseDirectory = Folder("Songs",
                 children: new List<IDirectoryTree<TrackReference>>
                 {
                     CustomSongsFolder(),
                     OstFolder()
                 });
-            tracksLoader = new TracksLoader(defaultIcon);
-
-            SetPrivate(this, typeof(DirectoryTreeBrowser<TrackReference>), "currentDirectory", baseDirectory);
-            OnInit?.Invoke();
         }
-
-        private void OnEnable() => Rebuild();
 
         private IDirectoryTree<TrackReference> OstFolder() => 
             Folder("OST", children: levelFolders
@@ -104,11 +126,8 @@ namespace CybergrindMusicExplorer.Components
                 Debug.LogWarning("Attempted to add song with no clips to playlist.");
         }
 
-        private IEnumerator LoadSongButton(TrackReference reference, GameObject btn)
+        private IEnumerator LoadSongButton(TrackReference reference, GameObject btn, GameObject placeholder)
         {
-            var placeholder = Instantiate(loadingPrefab, itemParent, false);
-            placeholder.SetActive(true);
-
             switch (reference.Type)
             {
                 case SoundtrackType.Asset:
@@ -126,10 +145,10 @@ namespace CybergrindMusicExplorer.Components
                 case SoundtrackType.External:
                 {
                     CustomSongData song = null;
-                    yield return LoadSongDataAndSubtitles(reference, data => song = data);
-                    
-                    Destroy(placeholder);
 
+                    yield return LoadSongDataAndSubtitles(reference, data => song = data);
+                    Destroy(placeholder);
+                        
                     if (song != null)
                         DrawCustomTrackButton(song, reference, btn);
                     break;
@@ -147,7 +166,7 @@ namespace CybergrindMusicExplorer.Components
             {
                 CustomSongData data = null;
                 yield return StartCoroutine(LoadSongDataAndSubtitles(reference, song => data = song));
-                if (!manager.PreventDuplicateTracks || !playlistEditor.Playlist.References.Contains(reference))
+                if (!manager.PreventDuplicateTracks || !playlistEditor.Playlist.References.Contains(reference) && data != null)
                     playlistEditor.Playlist.AddTrack(reference, data);
             }
             
@@ -245,14 +264,37 @@ namespace CybergrindMusicExplorer.Components
                 typeof(DirectoryTreeBrowser<TrackReference>), "currentDirectory");
 
             if (currentDirectory.parent == null || IsOstFolder(currentDirectory))
+            {
                 loadAllButton.SetActive(false);
-            else {
+                browserWindow.removeButton.SetActive(false);
+            } else
+            {
+                var confirmationWindow =
+                    browserWindow.confirmationWindow.GetComponent<TerminalBrowserConfirmationWindow>();
+                var removeButton = browserWindow.removeButton.GetComponent<Button>();
+                browserWindow.removeButton.SetActive(true);
+                removeButton.onClick.RemoveAllListeners();
+                removeButton.onClick.AddListener(() => confirmationWindow.ShowWarning(
+                    $"Are you sure you want to remove all the tracks from folder <color=orange>{currentDirectory.name.Truncate(32)}</color>?\n\n<i>CyberGrind will be restarted</i>",
+                    ClearFolder(currentDirectory)));
+                
                 loadAllButton.SetActive(true);
                 loadAllButton.GetComponent<Button>().onClick.RemoveAllListeners();
                 loadAllButton.GetComponent<Button>().onClick.AddListener(() => StartCoroutine(LoadAllFromFolder(currentDirectory)));
             }
             base.Rebuild(setToPageZero);
         }
+
+        private static UnityAction ClearFolder(IDirectoryTree<TrackReference> directory) => () =>
+        {
+            var dir = new DirectoryInfo(Path.Combine(CustomSongsPath,
+                RelativePathToDirectory(directory)));
+
+            foreach (var f in dir.GetFiles())
+                File.Delete(f.FullName);
+
+            SceneHelper.RestartScene();
+        };
 
         private static bool IsOstFolder(IDirectoryTree<TrackReference> folder)
         {
@@ -270,14 +312,21 @@ namespace CybergrindMusicExplorer.Components
         protected override Action BuildLeaf(TrackReference reference, int indexInPage)
         {
             var btn = Instantiate(itemButtonTemplate, itemParent, false);
-            StartCoroutine(LoadSongButton(reference, btn));
-            return () => Destroy(btn);
+            var placeholder = Instantiate(loadingPrefab, itemParent, false);
+            placeholder.SetActive(true);
+            StartCoroutine(LoadSongButton(reference, btn, placeholder));
+            return () =>
+            {
+                Destroy(btn);
+                if (placeholder != null)
+                    Destroy(placeholder);
+            };
         }
 
         private IDirectoryTree<TrackReference> TraverseFileTree(IDirectoryTree<FileInfo> tree, string folderName)
         {
             var children = tree.children
-                .Where(child => child.name != SpecialEffectsPath.Name)
+                .Where(child => child.name != SpecialEffectsDirectory.Name)
                 .ToList();
             
             var tracks = tree.files
@@ -339,5 +388,18 @@ namespace CybergrindMusicExplorer.Components
 
         private static void SetActiveAll(List<GameObject> objects, bool active) =>
             objects.ForEach(o => o.SetActive(active));
+
+        private static string RelativePathToDirectory(IDirectoryTree<TrackReference> directory)
+        {
+            var result = string.Empty;
+            var currentDir = directory;
+            while (currentDir.parent.parent != null)
+            {
+                result = currentDir.name + "/" + result;
+                currentDir = currentDir.parent;
+            }
+
+            return result;
+        }
     }
 }

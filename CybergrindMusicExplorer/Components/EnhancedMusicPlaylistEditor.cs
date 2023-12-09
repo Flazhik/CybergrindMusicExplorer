@@ -11,7 +11,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using static CybergrindMusicExplorer.Util.ReflectionUtils;
-using static CybergrindMusicExplorer.Util.PathsUtil;
+using static CybergrindMusicExplorer.Util.PathsUtils;
 using Object = UnityEngine.Object;
 
 namespace CybergrindMusicExplorer.Components
@@ -44,6 +44,7 @@ namespace CybergrindMusicExplorer.Components
 
         private CustomContentButton CurrentButton => buttons.ElementAtOrDefault(Playlist.selected % maxPageLength)
             ?.GetComponent<CustomContentButton>();
+        private GameObject clearButton;
 
         private void Awake()
         {
@@ -72,6 +73,7 @@ namespace CybergrindMusicExplorer.Components
 
             RewireButtonTo(ControlButton("OrderControls/LoopButton"), ToggleLoopMode);
             RewireButtonTo(ControlButton("OrderControls/ShufflleButton"), ToggleShuffle);
+            InstantiateClearButton();
         }
 
         private void Start()
@@ -97,7 +99,7 @@ namespace CybergrindMusicExplorer.Components
 
         public void SavePlaylist() => File.WriteAllText(PlaylistJsonPath, JsonConvert.SerializeObject(Playlist));
 
-        private IEnumerator LoadPlaylist()
+        public IEnumerator LoadPlaylist()
         {
             Debug.Log("Loading Playlist");
             CustomPlaylist loadedPlaylist;
@@ -107,15 +109,7 @@ namespace CybergrindMusicExplorer.Components
 
             if (loadedPlaylist?.References == null || loadedPlaylist.References.Count == 0)
             {
-                Debug.Log("No saved playlist found. Creating default...");
-                foreach (var referenceSoundtrackSong in browser.rootFolder)
-                {
-                    var handle = referenceSoundtrackSong.LoadAssetAsync();
-                    var song = handle.WaitForCompletion();
-                    Playlist.AddOriginalTrack(new TrackReference(SoundtrackType.Asset, referenceSoundtrackSong.AssetGUID),
-                        song);
-                    Addressables.Release(handle);
-                }
+                ResetPlaylist();
             }
             else
             {
@@ -368,6 +362,39 @@ namespace CybergrindMusicExplorer.Components
             buttons.Clear();
             LayoutRebuilder.ForceRebuildLayoutImmediate(itemParent as RectTransform);
             base.Rebuild(setToPageZero);
+        }
+        
+        private void InstantiateClearButton()
+        {
+            clearButton = Instantiate(ControlButton("Panel/PreviousButton").gameObject,
+                GameObject.Find($"{PanelCanvasPath}Panel").transform);
+            clearButton.GetComponent<RectTransform>().sizeDelta = new Vector2(100f, 45f);
+            clearButton.transform.localPosition = new Vector3(75f, 105f, -20f);
+
+            var textComponent = clearButton.transform.Find("Text").GetComponent<Text>();
+            textComponent.text = "CLEAR";
+            textComponent.fontSize = 16;
+            
+            clearButton.name = "Clear";
+            clearButton.GetComponent<Button>().onClick.RemoveAllListeners();
+            clearButton.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                ResetPlaylist();
+                Rebuild();
+            });
+        }
+
+        private void ResetPlaylist()
+        {
+            foreach (var referenceSoundtrackSong in browser.rootFolder)
+            {
+                var handle = referenceSoundtrackSong.LoadAssetAsync();
+                var song = handle.WaitForCompletion();
+                Playlist.RemoveAll();
+                Playlist.AddOriginalTrack(new TrackReference(SoundtrackType.Asset, referenceSoundtrackSong.AssetGUID),
+                    song);
+                Addressables.Release(handle);
+            }
         }
 
         private static Button ControlButton(string path)

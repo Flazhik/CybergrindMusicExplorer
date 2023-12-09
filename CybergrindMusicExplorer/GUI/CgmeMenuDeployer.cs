@@ -1,5 +1,7 @@
+using CybergrindMusicExplorer.GUI.Attributes;
 using CybergrindMusicExplorer.GUI.Controllers;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace CybergrindMusicExplorer.GUI
 {
@@ -11,10 +13,15 @@ namespace CybergrindMusicExplorer.GUI
         [PrefabAsset("assets/ui/playbackwindow.prefab")]
         private static GameObject playbackPrefab;
         
-        public GameObject playbackWindow;
-        private GameObject menuWindow;
+        [PrefabAsset("assets/ui/terminalbrowserwindow.prefab")]
+        private static GameObject terminalBrowserPrefab;
         
+        public GameObject playbackWindow;
+        public GameObject terminalBrowserWindow;
+        private GameObject menuWindow;
+
         private GameObject canvas;
+        private GameObject browserCanvas;
 
         private readonly OptionsManager optionsManager = OptionsManager.Instance;
         private readonly GameStateManager gameStateManager = GameStateManager.Instance;
@@ -25,11 +32,25 @@ namespace CybergrindMusicExplorer.GUI
 
         private void Awake()
         {
-            canvas = GameObject.Find("Canvas");
+            canvas = new GameObject
+            {
+                name = "CgmeCanvas"
+            };
+            canvas.AddComponent<Canvas>();
+
+            var canvasComponent = canvas.GetComponent<Canvas>();
+            canvasComponent.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasComponent.sortingOrder = GameObject.Find("/Canvas").GetComponent<Canvas>().sortingOrder + 1;
+            canvas.AddComponent<CanvasScaler>();
+            canvas.AddComponent<GraphicRaycaster>();
+
+            browserCanvas = GameObject.Find("/FirstRoom/Room/CyberGrindSettings/Canvas/SoundtrackMusic/Panel");
             menuWindow = Instantiate(menuPrefab, canvas.transform);
             playbackWindow = Instantiate(playbackPrefab, canvas.transform);
+            terminalBrowserWindow = Instantiate(terminalBrowserPrefab, browserCanvas.transform);
+            terminalBrowserWindow.transform.localPosition -= new Vector3(0f, 0f, 40f);
 
-            if (!menuWindow.TryGetComponent(out CgmeMenuController c))
+            if (!menuWindow.TryGetComponent(out CgmeMenuController _))
             {
                 var menuController = menuWindow.AddComponent<CgmeMenuController>();
                 menuWindow.AddComponent<HudOpenEffect>();
@@ -40,6 +61,12 @@ namespace CybergrindMusicExplorer.GUI
                     if (menuWindow.activeSelf)
                         CloseOptionsMenu();
                 };
+            }
+            
+            if (!terminalBrowserWindow.TryGetComponent(out TerminalBrowserController _))
+            {
+                var menuController = terminalBrowserWindow.AddComponent<TerminalBrowserController>();
+                terminalBrowserWindow.AddComponent<HudOpenEffect>();
             }
 
             menuWindow.SetActive(false);

@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static CybergrindMusicExplorer.Components.TracksLoader;
-using static CybergrindMusicExplorer.Util.PathsUtil;
+using static CybergrindMusicExplorer.Util.PathsUtils;
 
 namespace CybergrindMusicExplorer.Components
 {
@@ -34,8 +34,8 @@ namespace CybergrindMusicExplorer.Components
 
         private static void CreateEffectsFolder()
         {
-            if (!SpecialEffectsPath.Exists)
-                SpecialEffectsPath.Create();
+            if (!SpecialEffectsDirectory.Exists)
+                SpecialEffectsDirectory.Create();
         }
 
         private static void Prepare(Scene scene)
@@ -104,7 +104,7 @@ namespace CybergrindMusicExplorer.Components
 
         private static FileInfo SpecialTrack(string fileName)
         {
-            return new FileInfo(Path.Combine(SpecialEffectsPath.FullName, fileName));
+            return new FileInfo(Path.Combine(SpecialEffectsDirectory.FullName, fileName));
         }
     }
 }
