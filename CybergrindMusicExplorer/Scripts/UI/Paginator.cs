@@ -1,5 +1,5 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace CybergrindMusicExplorer.Scripts.UI
 {
@@ -10,6 +10,6 @@ namespace CybergrindMusicExplorer.Scripts.UI
         [SerializeField] private GameObject pageText;
 
         public void Refresh(int currentPage, int pagesCount) =>
-            pageText.GetComponent<Text>().text = $"{currentPage}/{pagesCount}";
+            pageText.GetComponent<TextMeshProUGUI>().text = $"{currentPage}/{pagesCount}";
     }
 }

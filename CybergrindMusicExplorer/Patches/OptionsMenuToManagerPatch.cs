@@ -1,8 +1,7 @@
 using HarmonyLib;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using static UnityEngine.Object;
-using static ControlsOptions;
 
 namespace CybergrindMusicExplorer.Patches
 {
@@ -18,7 +17,7 @@ namespace CybergrindMusicExplorer.Patches
         [HarmonyPatch(typeof(OptionsMenuToManager), "OpenOptions")]
         public static bool OptionsMenuToManager_OnEnable_Prefix(OptionsMenuToManager __instance)
         {
-            _note.GetComponent<Text>().text = GetNote();
+            _note.GetComponent<TextMeshProUGUI>().text = GetNote();
             return true;
         }
 
@@ -33,7 +32,7 @@ namespace CybergrindMusicExplorer.Patches
             generalSettings.SetSiblingIndex(0);
             CreateSection(_audioSettingsContent, "-- CYBERGRIND MUSIC EXPLORER --");
             _note = CreateSection(_audioSettingsContent, GetNote());
-            _note.GetComponent<Text>().fontSize = 16;
+            _note.GetComponent<TextMeshProUGUI>().fontSize = 16;
             return true;
         }
 
@@ -52,14 +51,14 @@ namespace CybergrindMusicExplorer.Patches
         {
             var section = Instantiate(_sectionPrefab, parent);
             section.name = text;
-            section.GetComponent<Text>().text = text;
+            section.GetComponent<TextMeshProUGUI>().text = text;
             return section;
         }
 
         private static string GetNote()
         {
             return
-                $"Please press [<color=orange>{GetKeyName((KeyCode)MonoSingleton<CybergrindMusicExplorerManager>.Instance.MenuBinding)}</color>] in Cybergrind to open CGME options";
+                $"Please press [<color=orange>{((KeyCode)MonoSingleton<CybergrindMusicExplorerManager>.Instance.MenuBinding).ToString()}</color>] in Cybergrind to open CGME options";
         }
     }
 }

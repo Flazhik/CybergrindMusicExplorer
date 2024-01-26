@@ -5,7 +5,6 @@ using System.Text;
 using SubtitlesParser.Classes;
 using SubtitlesParser.Classes.Parsers;
 using UnityEngine;
-
 using static CybergrindMusicExplorer.Util.CustomTracksNamingUtil;
 
 namespace CybergrindMusicExplorer.Components

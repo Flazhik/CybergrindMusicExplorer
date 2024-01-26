@@ -1,26 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using CybergrindMusicExplorer.Data;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static CybergrindMusicExplorer.Util.ReflectionUtils;
 
 namespace CybergrindMusicExplorer.Components
 {
-    public class PlaybackWindow : DirectoryTreeBrowser<TrackReference>
+    public class PlaybackWindow : DirectoryTreeBrowser<Playlist.SongIdentifier>
     {
         public event Action<int> OnSongSelected;
         
-        private EnhancedMusicPlaylistEditor playlistEditor;
-        private List<TrackReference> order;
+        private CustomMusicPlaylistEditor playlistEditor;
+        private IEnumerable<Playlist.SongIdentifier> order;
         private List<Transform> buttons = new List<Transform>();
         private Sprite defaultIcon;
 
         private int current;
 
-        protected override IDirectoryTree<TrackReference> baseDirectory =>
-            new FakeDirectoryTree<TrackReference>("Playlist", order);
+        protected override IDirectoryTree<Playlist.SongIdentifier> baseDirectory =>
+            new FakeDirectoryTree<Playlist.SongIdentifier>("Playlist", order);
         
         private CustomContentButton CurrentButton => buttons.ElementAtOrDefault(current % maxPageLength)
             ?.GetComponent<CustomContentButton>();
@@ -29,10 +29,10 @@ namespace CybergrindMusicExplorer.Components
 
         private void Awake()
         {
-            playlistEditor = CybergrindMusicExplorer.GetEnhancedPlaylistEditor();
+            playlistEditor = CybergrindMusicExplorer.GetPlaylistEditor();
             CloneInstance(
-                (DirectoryTreeBrowser<TrackReference>)playlistEditor,
-                (DirectoryTreeBrowser<TrackReference>)this,
+                (DirectoryTreeBrowser<Playlist.SongIdentifier>)playlistEditor,
+                (DirectoryTreeBrowser<Playlist.SongIdentifier>)this,
                 fieldsToIgnore: new List<string>
                 {
                     "baseDirectory",
@@ -40,8 +40,8 @@ namespace CybergrindMusicExplorer.Components
                 });
             
             itemParent = gameObject.transform.Find("SongsSelector");
-            SetPrivate(this, typeof(DirectoryTreeBrowser<TrackReference>), "pageText", gameObject.transform.Find("Page").GetComponent<Text>());
-            defaultIcon = (Sprite)GetPrivate(playlistEditor, typeof(EnhancedMusicPlaylistEditor), "defaultIcon");
+            SetPrivate(this, typeof(DirectoryTreeBrowser<Playlist.SongIdentifier>), "pageText", gameObject.transform.Find("Page").GetComponent<TMP_Text>());
+            defaultIcon = (Sprite)GetPrivate(playlistEditor, typeof(CustomMusicPlaylistEditor), "defaultIcon");
             
             gameObject.transform.Find("Back").GetComponent<Button>().onClick.AddListener(PreviousPage);
             gameObject.transform.Find("Forward").GetComponent<Button>().onClick.AddListener(NextPage);
@@ -52,7 +52,7 @@ namespace CybergrindMusicExplorer.Components
             GoToBase();
         }
         
-        public void ChangeOrder(List<TrackReference> newOrder)
+        public void ChangeOrder(IEnumerable<Playlist.SongIdentifier> newOrder)
         {
             EnablePlaybackMenu();
             order = newOrder;
@@ -73,21 +73,19 @@ namespace CybergrindMusicExplorer.Components
                 Select(index);
         }
 
-        protected override Action BuildLeaf(TrackReference item, int currentIndex)
+        protected override Action BuildLeaf(Playlist.SongIdentifier item, int currentIndex)
         {
-            CustomSongData data;
-            playlistEditor.Playlist.GetSongData(item, out data);
+            var data = playlistEditor.GetSongMetadata(item);
 
             var go = Instantiate(itemButtonTemplate, itemParent);
             var contentButton = go.GetComponent<CustomContentButton>();
-            contentButton.text.text = data.name.ToUpper();
+            contentButton.text.text = data.displayName.ToUpper();
             contentButton.icon.sprite = data.icon != null ? data.icon : defaultIcon;
             go.SetActive(true);
             buttons.Add(go.transform);
+            
             if (PageOf(current) == currentPage && contentButton == CurrentButton)
-            {
                 contentButton.border.color = Color.green;
-            }
             
             contentButton.button.onClick.AddListener(() =>
             {
@@ -99,10 +97,10 @@ namespace CybergrindMusicExplorer.Components
 
         private void Select(int newIndex, bool rebuild = true)
         {
-            if (newIndex < 0 || newIndex >= playlistEditor.Playlist.Count)
+            if (newIndex < 0 || newIndex >= playlistEditor.playlist.Count)
             {
                 Debug.LogWarning(
-                    $"Attempted to set current index {newIndex} outside bounds of playlist {playlistEditor.Playlist.Count}");
+                    $"Attempted to set current index {newIndex} outside bounds of playlist {playlistEditor.playlist.Count}");
             }
             else
             {

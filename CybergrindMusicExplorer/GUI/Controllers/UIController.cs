@@ -4,9 +4,10 @@ using System.Linq;
 using System.Reflection;
 using CybergrindMusicExplorer.GUI.Attributes;
 using CybergrindMusicExplorer.GUI.Elements;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static ControlsOptions;
+using static CybergrindMusicExplorer.Util.KeyUtils;
 using Object = UnityEngine.Object;
 
 namespace CybergrindMusicExplorer.GUI.Controllers
@@ -22,24 +23,16 @@ namespace CybergrindMusicExplorer.GUI.Controllers
             new Dictionary<Type, Action<Transform, UIController>>
         {
             {
-                typeof(SliderWithValue), (transform, controller) =>
-                {
-                    var slider = transform.gameObject.AddComponent<SliderWithValue>();
-                    slider.slider = transform.Find("Slider").GetComponent<Slider>();
-                    slider.value = transform.Find("Value").GetComponent<Text>();
-                }
-            },
-            {
                 typeof(ControlBinding), (transform, controller) => {
                     var binding = transform.gameObject.AddComponent<ControlBinding>();
                     binding.button = transform.GetComponent<Button>();
-                    binding.value = transform.Find("Text").GetComponent<Text>();
+                    binding.value = transform.Find("Text").GetComponent<TextMeshProUGUI>();
                 }
             },
             {
                 typeof(Counter), (transform, controller) => {
                     var counter = transform.gameObject.AddComponent<Counter>();
-                    counter.textValue = transform.Find("Value").GetComponent<Text>();
+                    counter.textValue = transform.Find("Value").GetComponent<TextMeshProUGUI>();
                     counter.Init(transform.Find("Increase").gameObject.AddComponent<CounterButton>(),
                         transform.Find("Decrease").gameObject.AddComponent<CounterButton>());
                 }
@@ -152,7 +145,7 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                     return;
                 }
                 
-                currentKey.GetComponentInChildren<Text>().text = GetKeyName(keyCode);
+                currentKey.GetComponentInChildren<TextMeshProUGUI>().text = ToHumanReadable(keyCode);
                 MonoSingleton<CybergrindMusicExplorerManager>.Instance.SetIntLocal(
                     "cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
                 currentKey.GetComponent<Image>().color = NormalColor;
@@ -170,7 +163,7 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                     keyCode = KeyCode.Mouse6;
 
                 Manager.SetIntLocal("cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
-                currentKey.GetComponentInChildren<Text>().text = GetKeyName(keyCode);
+                currentKey.GetComponentInChildren<TextMeshProUGUI>().text = ToHumanReadable(keyCode);
                 MonoSingleton<CybergrindMusicExplorerManager>.Instance.SetIntLocal(
                     "cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
 
@@ -184,7 +177,7 @@ namespace CybergrindMusicExplorer.GUI.Controllers
                 var keyCode = KeyCode.LeftShift;
                 if (Input.GetKey(KeyCode.RightShift))
                     keyCode = KeyCode.RightShift;
-                currentKey.GetComponentInChildren<Text>().text = GetKeyName(keyCode);
+                currentKey.GetComponentInChildren<TextMeshProUGUI>().text = ToHumanReadable(keyCode);
                 MonoSingleton<CybergrindMusicExplorerManager>.Instance.SetIntLocal(
                     "cyberGrind.musicExplorer.keyBinding." + currentKey.name, (int)keyCode);
 

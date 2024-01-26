@@ -1,5 +1,5 @@
-using System;
 using CybergrindMusicExplorer.Scripts.Utils;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -40,7 +40,7 @@ namespace CybergrindMusicExplorer.Scripts.UI
             ChangeStatusMessage("Download failed! Try again later.");
         }
 
-        public void DownloadingStatusUpdate(int percentage) => progressBar.GetComponent<CgmeProgressBar>().UpdateValue(percentage);
+        public void DownloadStatusUpdate(int percentage) => progressBar.GetComponent<CgmeProgressBar>().UpdateValue(percentage);
         
         public void CheckFfmpegPresence()
         {
@@ -55,7 +55,7 @@ namespace CybergrindMusicExplorer.Scripts.UI
             warning.SetActive(true);
         }
 
-        private void ChangeStatusMessage(string msg) => progressText.GetComponent<Text>().text = msg;
+        private void ChangeStatusMessage(string msg) => progressText.GetComponent<TextMeshProUGUI>().text = msg;
         
     }
 }

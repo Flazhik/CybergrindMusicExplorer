@@ -45,30 +45,24 @@ namespace CybergrindMusicExplorer.Util
 
         public static FileInfo WithoutPostfix(FileInfo path)
         {
-            if (!HasSpecialPostfix(path))
-                return path;
-
-            return new FileInfo(Regex.Replace(path.FullName, "_[a-zA-Z]+\\.[a-zA-Z0-9]+$", path.Extension));
+            return !HasSpecialPostfix(path)
+                ? path
+                : new FileInfo(Regex.Replace(path.FullName, "_[a-zA-Z]+\\.[a-zA-Z0-9]+$", path.Extension));
         }
 
-        public static bool HasSpecialPostfix(FileInfo path)
-        {
-            return SpecialPostfixes.Any(postfix => HasSpecialPostfix(path, postfix));
-        }
+        public static bool HasSpecialPostfix(FileInfo path) =>
+            SpecialPostfixes.Any(postfix => HasSpecialPostfix(path, postfix));
         
-        public static bool IntroOrLoopPart(FileInfo path)
-        {
-            return IntroLoopPostfixes.Any(postfix => HasSpecialPostfix(path, postfix));
-        }
         
-        public static bool HasIntroAndLoop(IGrouping<string, FileInfo> tracks)
-        {
-            return IntroLoopPostfixes.All(postfix => tracks.Any(track => HasSpecialPostfix(track, postfix)));
-        }
+        public static bool IntroOrLoopPart(FileInfo path) =>
+            IntroLoopPostfixes.Any(postfix => HasSpecialPostfix(path, postfix));
+        
+        
+        public static bool HasIntroAndLoop(IGrouping<string, FileInfo> tracks) =>
+            IntroLoopPostfixes.All(postfix => tracks.Any(track => HasSpecialPostfix(track, postfix)));
+        
 
-        public static bool HasSpecialPostfix(FileInfo path, string postfix)
-        {
-            return GetFileNameWithoutExtension(path.Name).EndsWith($"_{postfix}");
-        }
+        public static bool HasSpecialPostfix(FileInfo path, string postfix) 
+            => GetFileNameWithoutExtension(path.Name).EndsWith($"_{postfix}");
     }
 }

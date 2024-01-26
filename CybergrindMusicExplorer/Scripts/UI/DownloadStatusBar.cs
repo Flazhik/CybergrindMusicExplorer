@@ -1,5 +1,5 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace CybergrindMusicExplorer.Scripts.UI
 {
@@ -19,12 +19,12 @@ namespace CybergrindMusicExplorer.Scripts.UI
 
         public CgmeProgressBar progressBar;
         
-        private Text statusLabelText;
+        private TextMeshProUGUI statusLabelText;
 
         private void Start()
         {
             progressBar = progressBarGo.GetComponent<CgmeProgressBar>();
-            statusLabelText = statusLabel.GetComponent<Text>();
+            statusLabelText = statusLabel.GetComponent<TextMeshProUGUI>();
         }
 
         public void Downloading()

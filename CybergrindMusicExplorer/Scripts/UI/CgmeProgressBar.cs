@@ -1,5 +1,5 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace CybergrindMusicExplorer.Scripts.UI
 {
@@ -8,7 +8,7 @@ namespace CybergrindMusicExplorer.Scripts.UI
         [SerializeField]
         private GameObject bar;
 
-        [SerializeField] private Text textValue;
+        [SerializeField] private TextMeshProUGUI textValue;
         
         private void Start()
         {

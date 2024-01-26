@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.IO;
 using System.Threading.Tasks;
 using BepInEx;
 using CybergrindMusicExplorer.Components;
@@ -10,7 +9,7 @@ using CybergrindMusicExplorer.Util;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static CybergrindMusicExplorer.Patches.Patches;
-using static ControlsOptions;
+using static CybergrindMusicExplorer.Util.KeyUtils;
 
 namespace CybergrindMusicExplorer
 
@@ -20,28 +19,22 @@ namespace CybergrindMusicExplorer
     public class CybergrindMusicExplorer : BaseUnityPlugin
     {
         private static Version _newestVersion = new Version("1.0.0");
-        private const string SuitableUltrakillVersion = "3.3";
 
-        private static EnhancedMusicPlaylistEditor _editor;
-        private EnhancedMusicBrowser browser;
+        private static CustomMusicPlaylistEditor _editor;
+        private EnhancedMusicFileBrowser fileBrowser;
         private GameObject cybergrindMusicExplorerSettings;
         private GUIManager GUIManager;
         private CybergrindEffectsChanger cybergrindEffectsChanger;
         private TracksDownloadManager tracksDownloadManager;
         private bool menuMessageIsShown;
 
-        public static EnhancedMusicPlaylistEditor GetEnhancedPlaylistEditor()
-        {
-            return _editor;
-        }
+        public static CustomMusicPlaylistEditor GetPlaylistEditor() => _editor;
+        
         
         public static Version GetNewestVersion() => _newestVersion;
 
         private void Awake()
         {
-            if (Application.version != SuitableUltrakillVersion)
-                return;
-            
             Logger.LogInfo("Initializing Cybergrind Music Explorer");
             StartCoroutine(Startup());
             
@@ -55,7 +48,6 @@ namespace CybergrindMusicExplorer
             GUIManager.Init();
             cybergrindEffectsChanger = CybergrindEffectsChanger.Instance;
             tracksDownloadManager = TracksDownloadManager.Instance;
-            UpdateNote();
             #pragma warning disable CS4014
             RetrieveNewestVersion();
             #pragma warning restore CS4014
@@ -73,8 +65,9 @@ namespace CybergrindMusicExplorer
                 {
                     MonoSingleton<CybergrindMusicExplorerManager>.Instance.allowMusicBoost = false;
                     PatchMusicManager();
+                    PatchMusicChanger();
                     
-                    if (browser != null)
+                    if (fileBrowser != null)
                         break;
                     yield return OnCybergrind();
                     break;
@@ -93,12 +86,15 @@ namespace CybergrindMusicExplorer
             MonoSingleton<CybergrindMusicExplorerManager>.Instance.allowMusicBoost = true;
             CalmThemeManager.Instance.Init();
             PatchAudioMixer();
+            PatchPlaylist();
+            PatchCustomMusicPlaylistEditor();
+            PatchDirectoryTree();
             PatchFinalCyberRank();
 
-            EnhancedMusicBrowser.OnInit += OnEnhancedBrowserInit;
-            var oldBrowser = FindObjectOfType<CustomMusicSoundtrackBrowser>();
+            EnhancedMusicFileBrowser.OnInit += OnEnhancedBrowserInit;
+            var oldBrowser = FindObjectOfType<CustomMusicFileBrowser>();
             var musicObject = oldBrowser.transform.gameObject;
-            browser = musicObject.AddComponent<EnhancedMusicBrowser>();
+            fileBrowser = musicObject.AddComponent<EnhancedMusicFileBrowser>();
             Destroy(oldBrowser);
             ClearTmpDirectory();
             yield return new WaitForSeconds(2.5f);
@@ -112,13 +108,13 @@ namespace CybergrindMusicExplorer
                 return;
 
             HudMessageReceiver.Instance.SendHudMessage(
-                $"To open Cybergrind Music Explorer settings now or midgame, press [<color=orange>{GetKeyName((KeyCode)manager.MenuBinding)}</color>]");
+                $"To open Cybergrind Music Explorer settings now or midgame, press [<color=orange>{ToHumanReadable((KeyCode)manager.MenuBinding)}</color>]");
             menuMessageIsShown = true;
         }
 
         private void OnEnhancedBrowserInit()
         {
-            _editor = FindObjectOfType<EnhancedMusicPlaylistEditor>();
+            _editor = FindObjectOfType<CustomMusicPlaylistEditor>();
             PatchMusicPlayer();
         }
 
@@ -144,21 +140,6 @@ namespace CybergrindMusicExplorer
         {
             await UpdatesManager.GetNewVersion();
             _newestVersion = UpdatesManager.NewestVersion;
-        }
-
-        private void UpdateNote()
-        {
-            File.WriteAllText(
-                Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Cybergrind", "Music", "NOTE.txt"),
-                @"ULTRAKILL doesn't support custom Cyber Grind music yet.
-Unless I have something to say about it.
-
-:)
-
-Note that Playlist.json is ignored while CybergrindMusicExplorer mod is active, and EnhancedPlaylist.json is used instead.
-But essentially its structure pretty much is the same, and same rules also apply: it must be valid json.
-If you edit it, make sure you don't break the format."
-            );
         }
     }
 }

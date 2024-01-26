@@ -1,39 +1,20 @@
 ![Version](https://img.shields.io/github/v/release/Flazhik/CybergrindMusicExplorer)
 ![Licence](https://img.shields.io/github/license/Flazhik/CybergrindMusicExplorer)
 
-# Custom Cyber Grind Music Explorer
+# Cyber Grind Music Explorer
 
-### Download and add your custom tracks in Cyber Grind playlist and have a complete control over the playback
+### Enhanced music browser and player for Cyber Grind
 
 ![CGME](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/63593445-8bea-43b5-87eb-1cd7e00ed527)
 
 ## Disclaimer
-
-Custom music in Cyber Grind playlist is an upcoming feature of ULTRAKILL, so you can use this mod until custom tracks are officially supported.
-#### It doesn't interfere with leaderboards and doesn't alter your gameplay in any way apart from custom music: your score will be saved
-This mod does not affect the folder with original soundtrack, so you can combine it with your custom tracks.
-
-## [09-12-2023] Violence layer update statement
-
-Most likely CyberGrind is going to officially support custom tracks by the end of the year.
-
-The initial purpose of this mod was exactly that, so it'll become obsolete in that sense by the end of the year.
-
-However, for the last 6 months I've been adding extra features in order to make CG experience as customisable and pleasant as I can (including volume boost, calm themes, intros and loops, downloader, things like that) and I'm not planning to stop since the mod has become much more than just custom tracks support, and I'll continue to work in that direction.
-
-Once the custom tracks support is released, and in case you want to stick with the official part of the functionality, it'll be up to you and I hope you've enjoyed the mod!
-
-### However, in case you're willing to continue using CGME, please note the following:
-
-1. It's guaranteed that firstly an official support will completely break CGME functionality. It's going to take some time for me to fix it, and because of that, I ensured the mod will disable itself with the following update. If you're using a version older than 1.6.0, you're going to have to disable it yourself
-2. When the time comes, I'll adapt the mod and will release the suitable 1.7.0 version as soon as I can. But until then, you're going to have to wait for the announcement
-
-Again, it will not stop me from developing the mod, and I'll get back to you with updates soon!
+Formerly the main focus of this mod was to allow to play custom music in Cyber Grind, but since this part is official now CGME will be developing as a QoL mod and an enhancement of existing music player.
+#### _This mod doesn't affect leaderboards and doesn't alter your gameplay: your score will be saved_
 
 - [Installation](#installation)
-- [How to use](#using-the-mod)
+- [Basics](#basics)
 - [Mod settings](#settings)
-- Additional Features
+- Features
   - [Playback menu](#playback-menu)
   - [Downloader](#downloader)
   - [Calm & Battle themes](#calm-and-battle-themes)
@@ -49,36 +30,35 @@ Again, it will not stop me from developing the mod, and I'll get back to you wit
 2. Extract the contents of **BepInEx** archive in your local **ULTRAKILL** folder. If you're not sure where this folder
    is located, find **ULTRAKILL** in your Steam Library > Right mouse click > **Properties** > **Local files** > **Browse**
 3. Download the CybergrindMusicExplorer
-   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.6.0/CybergrindMusicExplorer.v1.6.0.zip), then
+   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.6.1/CybergrindMusicExplorer.v1.6.1.zip), then
    extract its contents at **ULTRAKILL/BepInEx/plugins** (create *plugins* folder manually in case it's missing)
-    
-You can also use r2modman for that. Both methods are described in the video below (click to open):
 
+You can also use r2modman for that. Both methods are described in the video below (click to open):
 [![Watch the video](https://img.youtube.com/vi/oCmJJdCK8IE/hqdefault.jpg)](https://youtu.be/oCmJJdCK8IE)
 
-## Using the mod
+## Basics
 
-1. Move your custom tracks/folders to *ULTRAKILL/Cybergrind/Music*
-2. Launch the game and go to the blue Cyber Grind settings terminal
-3. **Music** section of the terminal should now contain two folders for original score and your own tracks
-4. Fill the playlist the way you want and enjoy
-5. Optional: Music Explorer settings menu is available by pressing F4 (by default)
+All the basic functionality is available by pressing **F4** while in Cyber Grind and ~ while in arena.
+
+In case you forgot your CGME menu hotkey, open **Audio** section of ULTRAKILL options to check it.
 
 ## Settings
-![CGME menu](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/a5befff1-6d7f-4ed7-a768-468cb5dc4e7d)
+![CGME menu](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/4a2643a1-cd93-4571-a530-69c6a6e8af52)
 
 All the settings for the mod are available by pressing CGME Menu hotkey (F4 by default). The main screen of the menu contains the following options:
-1. **Show current track panel indefinitely**: once checked, this option will make the "Now playing" panel to be present the whole time the track is playing.
-2. **Display subtitles**: enable subtitles if present. Yes, the mod supports it, but more on that later.
-3. **Volume boost for custom tracks**: if your track is still too quiet, you can always add up to 10dB to it. Please use it carefully.
-4. **Prevent duplicate tracks**: prevents tracks duplication. Once checked, deletes existing duplicates.
+1. **Show current track panel indefinitely**: once checked, this option will make the "Now playing" panel to be present the whole time the track is playing
+2. **Display subtitles**: enable subtitles if present. Yes, the mod supports it, but more on that later
+3. **Volume boost for custom tracks**: if your track is still too quiet, you can always add up to 10dB to it. Please use it carefully
+4. **Menu upscale**: you can make both main and playback menus a little bit bigger
+5. **Prevent duplicate tracks**: prevents tracks duplication. Once checked, deletes existing duplicates
+6. **Add downloaded tracks to playlist automatically**: all the tracks that are obtained via [Downloader](#downloader) will be added to playlist automatically
 
 For other settings like key bindings and Themes, use the respective tab. 
 
 ## Playback menu
 ![Playback menu](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/b4b789ab-6c50-4b6d-97d2-8c7eb62acc33)
 
-Allows you to switch between the tracks mid-game. Available by pressing **Tab** by default.
+Allows you to switch between the tracks mid-game. Available by pressing **~** by default.
 
 If the whole menu is an overkill for you, just switch between tracks using **Next track** hotkey.
 

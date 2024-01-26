@@ -2,26 +2,18 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection.Emit;
 using CybergrindMusicExplorer.Components;
 using HarmonyLib;
 using UnityEngine;
 using static HarmonyLib.AccessTools;
 using static System.Reflection.Emit.OpCodes;
+using static CybergrindMusicExplorer.Util.ReflectionUtils;
 
 namespace CybergrindMusicExplorer.Patches
 {
     [HarmonyPatch(typeof(MusicManager))]
     public class MusicManagerPatch
     {
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(MusicManager), "OnEnable")]
-        public static bool MusicManager_OnEnable_Prefix(MusicManager __instance)
-        { 
-            __instance.bossTheme = __instance.battleTheme;
-            return true;
-        }
-        
         [HarmonyPostfix]
         [HarmonyPatch(typeof(MusicManager), "StartMusic")]
         [SuppressMessage("ReSharper", "MustUseReturnValue")]
@@ -35,10 +27,19 @@ namespace CybergrindMusicExplorer.Patches
          */
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MusicManager), "PlayBattleMusic")]
-        public static bool MusicManager_PlayBattleMusic_Prefix(MusicChanger __instance)
+        public static bool MusicManager_PlayBattleMusic_Prefix(MusicManager __instance)
         {
             var caller = new StackTrace().GetFrame(2).GetMethod();
-            return caller.DeclaringType?.DeclaringType == typeof(CalmThemeManager);
+            var callerIsValid = caller.DeclaringType?.DeclaringType == typeof(CalmThemeManager);
+
+            if (!callerIsValid)
+                return false;
+            
+            if (!__instance.dontMatch && __instance.targetTheme != __instance.battleTheme)
+                __instance.battleTheme.time = __instance.cleanTheme.time;
+
+            __instance.targetTheme = __instance.bossTheme;
+            return false;
         }
         
         /*
@@ -65,10 +66,27 @@ namespace CybergrindMusicExplorer.Patches
         
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MusicManager), "PlayCleanMusic")]
-        public static bool MusicManager_PlayCleanMusic_Prefix(MusicChanger __instance)
+        public static bool MusicManager_PlayCleanMusic_Prefix(MusicManager __instance)
         {
             var caller = new StackTrace().GetFrame(2).GetMethod();
-            return caller.DeclaringType?.DeclaringType == typeof(CalmThemeManager);
+            if (caller.DeclaringType?.DeclaringType != typeof(CalmThemeManager))
+                return false;
+            
+            if (!__instance.dontMatch && __instance.targetTheme != __instance.cleanTheme)
+                __instance.cleanTheme.time = __instance.bossTheme.time;
+            if (__instance.battleTheme.volume == (double) __instance.volume)
+                __instance.cleanTheme.time = __instance.bossTheme.time;
+
+            var themesAreIdentical = __instance.cleanTheme.clip == __instance.battleTheme.clip;
+            var playingClean = __instance.targetTheme == __instance.cleanTheme;
+
+            __instance.targetTheme = themesAreIdentical switch
+            {
+                true when playingClean => __instance.bossTheme,
+                false when !playingClean => __instance.cleanTheme,
+                _ => __instance.targetTheme
+            };
+            return false;
         }
 
         [HarmonyTranspiler]
@@ -101,8 +119,5 @@ namespace CybergrindMusicExplorer.Patches
             return instruction.opcode == Callvirt
                    && instruction.OperandIs(Method(typeof(AudioSource), "get_time"));
         }
-        
-        private static IEnumerable<CodeInstruction> IL(params (OpCode, object)[] instructions) =>
-            instructions.Select(i => new CodeInstruction(i.Item1, i.Item2)).ToList();
     }
 }

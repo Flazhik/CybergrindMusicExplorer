@@ -23,14 +23,14 @@ namespace CybergrindMusicExplorer.Components
             try
             {
                 Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                Client.DefaultRequestHeaders.UserAgent.TryParseAdd("CybergrindMusicExplorer/1.6.0");
+                Client.DefaultRequestHeaders.UserAgent.TryParseAdd("CybergrindMusicExplorer/1.6.1");
                 Client.Timeout = FromSeconds(5);
 
                 var raw = await Client.GetStringAsync(GitHubUrl);
                 var latest = DeserializeObject<GitHubLatest>(raw);
                 NewestVersion = latest.Version;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 NewestVersion = CurrentVersion;
             }

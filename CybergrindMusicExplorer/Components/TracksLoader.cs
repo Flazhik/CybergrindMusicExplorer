@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CybergrindMusicExplorer.Data;
-using CybergrindMusicExplorer.Util;
 using SubtitlesParser.Classes;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -34,13 +33,16 @@ namespace CybergrindMusicExplorer.Components
             { "1b5ee7ae7309522489b5d72a65d8dabb", "a832611e4b58d124ab17f996548ef889" },
             { "7b5abb0398b6ab24388e486ef8d0c917", "72c085b36bba1e64db1f89ed5382ccb4" },
             { "529bfdda1fa77064b89af39108fba2ad", "3aa6eaa2c75c61e40aec5526464133ab" },
-            { "7e42e41d5c5ceda44a95405158329d6e", "7dc93ba8b2421ba41a17a46a9a5d4704" }
+            { "7e42e41d5c5ceda44a95405158329d6e", "7dc93ba8b2421ba41a17a46a9a5d4704" },
+            { "6da404a7f7065194794357f35f6db2dd", "10214ceea6a6fde42bf44692a0c650c2" },
+            { "528eb7499c8f36746aa951bb8990b769", "64f9c5192b8abf64c9739cfd1d1ab0e7" },
+            { "5ee7f58d818624640ad4843106506a19", "7da78bb4aae3cf8459eeb26e6ea58b6c" },
         };
         
         private readonly Dictionary<string, CustomSongData> customTracksCache =
             new Dictionary<string, CustomSongData>();
 
-        private readonly Dictionary<string, CustomSongData> soundtrackCache = new Dictionary<string, CustomSongData>();
+        private readonly Dictionary<Playlist.SongIdentifier, CustomSongData> soundtrackCache = new Dictionary<Playlist.SongIdentifier, CustomSongData>();
         private readonly Dictionary<string, List<List<SubtitleItem>>> subtitlesCache =
             new Dictionary<string, List<List<SubtitleItem>>>();
         private readonly Sprite defaultIcon;
@@ -50,20 +52,20 @@ namespace CybergrindMusicExplorer.Components
             this.defaultIcon = defaultIcon;
         }
 
-        public IEnumerator LoadSongData(TrackReference reference, Action<CustomSongData> callback)
+        public IEnumerator LoadSongData(Playlist.SongIdentifier reference, Action<CustomSongData> callback)
         {
             CustomSongData song;
-            if (soundtrackCache.ContainsKey(reference.Reference))
+            if (soundtrackCache.ContainsKey(reference))
             {
-                yield return new WaitUntil(() => soundtrackCache[reference.Reference] != null);
-                song = soundtrackCache[reference.Reference];
+                yield return new WaitUntil(() => soundtrackCache[reference] != null);
+                song = soundtrackCache[reference];
             }
             else
             {
                 AudioClip cleanTheme = null;
                 
                 // A hack for OST calm themes
-                if (CleanThemesReferences.TryGetValue(reference.Reference, out var clean))
+                if (CleanThemesReferences.TryGetValue(reference.path, out var clean))
                 {
                     var cleanThemeHandle = new AssetReferenceT<AudioClip>(clean).LoadAssetAsync();
                     yield return new WaitUntil(() => cleanThemeHandle.IsDone);
@@ -72,7 +74,7 @@ namespace CybergrindMusicExplorer.Components
                 }
 
                 // "Into the fire" asset is not an AudioClip
-                if (reference.Reference.Equals(IntoTheFire.Item1))
+                if (reference.path.Equals(IntoTheFire.Item1))
                 {
                     var cleanThemeHandle = new AssetReferenceT<GameObject>(IntoTheFire.Item2).LoadAssetAsync();
                     yield return new WaitUntil(() => cleanThemeHandle.IsDone);
@@ -81,15 +83,15 @@ namespace CybergrindMusicExplorer.Components
                     Addressables.Release(cleanThemeHandle);
                 }
 
-                var battleThemeHandle = new AssetReferenceT<SoundtrackSong>(reference.Reference).LoadAssetAsync();
-                soundtrackCache.Add(reference.Reference, null);
+                var battleThemeHandle = new AssetReferenceT<SoundtrackSong>(reference.path).LoadAssetAsync();
+                soundtrackCache.Add(reference, null);
                 yield return new WaitUntil(() => battleThemeHandle.IsDone);
                 
                 song = CustomSongData.FromSoundtrack(
                     battleThemeHandle.Result,
                     cleanTheme,
                     null);
-                soundtrackCache[reference.Reference] = song;
+                soundtrackCache[reference] = song;
 
                 Addressables.Release(battleThemeHandle);
             }
@@ -118,7 +120,7 @@ namespace CybergrindMusicExplorer.Components
                     var file = File.Create(fileInfo.FullName);
                     metadata = CustomTrackMetadata.From(file);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     metadata = CustomTrackMetadata.EmptyMetadata();
                 }
@@ -140,7 +142,7 @@ namespace CybergrindMusicExplorer.Components
                 try
                 {
                     metadata = CustomTrackMetadata.From(File.Create(introClipInfo.FullName));
-                } catch (Exception e)
+                } catch (Exception)
                 {
                     metadata = CustomTrackMetadata.EmptyMetadata();
                 }
@@ -207,51 +209,48 @@ namespace CybergrindMusicExplorer.Components
 
         private static IEnumerator LoadSong(FileSystemInfo fileInfo, Action<AudioClip> callback)
         {
-            yield return LoadCustomSong(fileInfo.FullName, AudioTypesByExtension[fileInfo.Extension], true, callback);
+            yield return LoadCustomSong(fileInfo.FullName, AudioTypesByExtension[fileInfo.Extension.ToLower()], true, callback);
         }
 
         public static IEnumerator LoadCustomSong(string path, AudioType audioType, bool async, Action<AudioClip> callback)
         {
-            AudioClip audioClip;
-            using (var request =
-                   UnityWebRequestMultimedia.GetAudioClip("file:///" + UnityWebRequest.EscapeURL(path), audioType))
+            using var request =
+                UnityWebRequestMultimedia.GetAudioClip("file:///" + UnityWebRequest.EscapeURL(path), audioType);
+            ((DownloadHandlerAudioClip)request.downloadHandler).streamAudio = async;
+            request.SendWebRequest();
+                
+            while (!request.isDone || request.error != null)
+                yield return null;
+                
+            if (request.error != null)
             {
-                ((DownloadHandlerAudioClip)request.downloadHandler).streamAudio = async;
-                request.SendWebRequest();
-                
-                while (!request.isDone || request.error != null)
-                    yield return null;
-                
-                if (request.error != null)
-                {
-                    Debug.LogError(request.error);
-                    yield break;
-                }
-
-                try
-                {
-                    audioClip = ((DownloadHandlerAudioClip)request.downloadHandler).audioClip;
-                    
-                    if (audioClip.channels != 0)
-                        callback(audioClip);
-                }
-                catch (Exception)
-                {
-                    Debug.LogError($"Cannot parse AudioClip {path}");
-                    yield break;
-                }
-
-                if (audioClip == null)
-                {
-                    Debug.LogError($"Downloaded AudioClip is null, path=[{path}].");
-                    yield break;
-                }
-
-                if (request.error != null)
-                {
-                    Debug.LogError("Unexpected error, can't download AudioClip path=[{path}].");
-                }
+                Debug.LogError(request.error);
+                yield break;
             }
+
+            AudioClip audioClip;
+            try
+            {
+                audioClip = ((DownloadHandlerAudioClip)request.downloadHandler).audioClip;
+                    
+                if (audioClip.channels != 0)
+                    callback(audioClip);
+            }
+            catch (Exception)
+            {
+                Debug.LogError($"Cannot parse AudioClip {path}");
+                yield break;
+            }
+
+            if (audioClip == null)
+            {
+                Debug.LogError($"Downloaded AudioClip is null, path=[{path}].");
+                yield break;
+            }
+
+            if (request.error != null)
+                Debug.LogError("Unexpected error, can't download AudioClip path=[{path}].");
+            
         }
     }
 }

@@ -18,6 +18,12 @@ namespace CybergrindMusicExplorer
             set => prefsManager.SetFloatLocal("cyberGrind.musicExplorer.customTracksVolumeBoost", value);
         }
         
+        public float MenuUpscale
+        {
+            get => prefsManager.GetFloatLocal("cyberGrind.musicExplorer.menuUpscale");
+            set => prefsManager.SetFloatLocal("cyberGrind.musicExplorer.menuUpscale", value);
+        }
+        
         public bool PlayCalmTheme
         {
             get => prefsManager.GetBoolLocal("cyberGrind.musicExplorer.playCalmTheme", true);
@@ -28,6 +34,12 @@ namespace CybergrindMusicExplorer
         {
             get => prefsManager.GetBoolLocal("cyberGrind.musicExplorer.preventDuplicateTracks", false);
             set => prefsManager.SetBoolLocal("cyberGrind.musicExplorer.preventDuplicateTracks", value);
+        }        
+        
+        public bool AddDownloadedTracks
+        {
+            get => prefsManager.GetBoolLocal("cyberGrind.musicExplorer.addDownloadedTracks", false);
+            set => prefsManager.SetBoolLocal("cyberGrind.musicExplorer.addDownloadedTracks", value);
         }
         
         public int CalmThemeEnemiesThreshold
@@ -35,13 +47,19 @@ namespace CybergrindMusicExplorer
             get => prefsManager.GetIntLocal("cyberGrind.musicExplorer.calmThemeEnemiesThreshold", 2);
             set => prefsManager.SetIntLocal("cyberGrind.musicExplorer.calmThemeEnemiesThreshold", value);
         }
+        
+        public int SelectedPlaylistSlot
+        {
+            get => prefsManager.GetIntLocal("cyberGrind.musicExplorer.selectedPlaylistSlot", 1);
+            set => prefsManager.SetIntLocal("cyberGrind.musicExplorer.selectedPlaylistSlot", value);
+        }
 
         public int NextTrackBinding =>
             prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMENextTrack", 284);
 
         public int MenuBinding => prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMEMenu", 285);
         
-        public int PlaybackMenuBinding => prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMEPlaybackMenu", 9);
+        public int PlaybackMenuBinding => prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMEPlaybackMenu", 96);
 
         public void SetIntLocal(string key, int content)
         {

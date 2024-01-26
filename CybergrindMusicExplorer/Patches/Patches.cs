@@ -41,11 +41,6 @@ namespace CybergrindMusicExplorer.Patches
 
         public static void PatchMusicManager()
         {
-            PatchMethod(typeof(MusicManager), "OnEnable")
-                .WithPrefix(typeof(MusicManagerPatch), "MusicManager_OnEnable_Prefix")
-                .Using(Harmony)
-                .Once();
-
             if (SceneHelper.CurrentScene != "Endless")
                 return;
             
@@ -67,10 +62,60 @@ namespace CybergrindMusicExplorer.Patches
                 .Once();
         }
 
+        public static void PatchMusicChanger()
+        {
+            if (SceneHelper.CurrentScene != "Endless")
+                return;
+            
+            PatchMethod(typeof(MusicChanger), "Change")
+                .WithTranspiler(typeof(MusicChangerPatch), "MusicChanger_Change_Transpiler")
+                .Using(Harmony)
+                .Once();
+        }
+
         public static void PatchFinalCyberRank()
         {
             PatchMethod(typeof(FinalCyberRank), "GameOver")
                 .WithPrefix(typeof(FinalCyberRankPatch), "FinalCyberRank_GameOver_Prefix")
+                .Using(Harmony)
+                .Once();
+        }
+
+        public static void PatchCustomMusicPlaylistEditor()
+        {
+            PatchMethod(typeof(CustomMusicPlaylistEditor), "GetSongMetadataFromFilepath")
+                .WithPrefix(typeof(CustomMusicPlaylistEditorPatch), "CustomMusicPlaylistEditor_GetSongMetadataFromFilepath_Prefix")
+                .Using(Harmony)
+                .Once();
+            
+            PatchMethod(typeof(CustomMusicPlaylistEditor), "LoadPlaylist")
+                .WithPrefix(typeof(CustomMusicPlaylistEditorPatch), "CustomMusicPlaylistEditor_LoadPlaylist_Prefix")
+                .Using(Harmony)
+                .Once();
+        }        
+        
+        public static void PatchPlaylist()
+        {
+            PatchMethod(typeof(Playlist), "Add")
+                .WithPrefix(typeof(PlaylistPatch), "Playlist_Add_Prefix")
+                .Using(Harmony)
+                .Once();
+            
+            PatchMethod(typeof(Playlist), "get_currentPath")
+                .WithPrefix(typeof(PlaylistPatch), "Playlist_get_currentPath_Prefix")
+                .Using(Harmony)
+                .Once();
+        }
+        
+        public static void PatchDirectoryTree()
+        {
+            PatchMethod(typeof(FileDirectoryTree), "GetFilesRecursive")
+                .WithPrefix(typeof(FileDirectoryTreePatch), "FileDirectoryTree_GetFilesRecursive_Prefix")
+                .Using(Harmony)
+                .Once();
+            
+            PatchMethod(typeof(FileDirectoryTree), "Refresh")
+                .WithPrefix(typeof(FileDirectoryTreePatch), "FileDirectoryTree_Refresh_Prefix")
                 .Using(Harmony)
                 .Once();
         }

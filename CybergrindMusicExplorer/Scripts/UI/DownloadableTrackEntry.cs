@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using CybergrindMusicExplorer.Scripts.Data;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,7 +9,7 @@ namespace CybergrindMusicExplorer.Scripts.UI
 {
     public class DownloadableTrackEntry : MonoBehaviour
     {
-        [SerializeField] private Text titleText;
+        [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private GameObject statusBarGo;
         [SerializeField] public Image preview;
         public DownloadStatusBar statusBar;

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using CybergrindMusicExplorer.Scripts.Data;
 using CybergrindMusicExplorer.Scripts.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,7 +22,7 @@ namespace CybergrindMusicExplorer.Scripts
         [SerializeField] private GameObject trackEntryPrefab;
         [SerializeField] private GameObject paginator;
         [SerializeField] private GameObject easterEgg;
-        [SerializeField] private Text errorField;
+        [SerializeField] private GameObject errorField;
 
         private int currentPage;
         private int downloaded;
@@ -31,7 +32,7 @@ namespace CybergrindMusicExplorer.Scripts
         private readonly List<IEnumerator> downloadRoutines = new List<IEnumerator>();
         private Func<DownloadableTrackEntry, TracksDownloader, IEnumerator> downloadCallback;
         private Func<List<DownloadableTrackEntry>, TracksDownloader, List<IEnumerator>> downloadAllCallback;
-
+        
         private void Start()
         {
             var inputField = urlField.GetComponent<InputField>();
@@ -40,7 +41,6 @@ namespace CybergrindMusicExplorer.Scripts
 
             pagination.previousButton.GetComponent<Button>().onClick.AddListener(() => SetPage(currentPage - 1));
             pagination.nextButton.GetComponent<Button>().onClick.AddListener(() => SetPage(currentPage + 1));
-
             downloadAllButton.GetComponent<Button>().onClick.AddListener(() =>
             {
                 downloadAllButton.SetActive(false);
@@ -52,20 +52,19 @@ namespace CybergrindMusicExplorer.Scripts
                 });
             });
 
+            if (URLChanged != null)
+                delayedField.ValueChanged += URLChanged;
+            Rebuild();
+            
             inputField.onValueChanged.AddListener(__ =>
             {
-                errorField.text = string.Empty;
+                DisplayMessage(string.Empty);
                 loadingRing.SetActive(false);
                 downloadRoutines.ForEach(StopCoroutine);
                 downloadRoutines.Clear();
                 downloaded = 0;
                 failed = 0;
             });
-
-            if (URLChanged != null)
-                delayedField.ValueChanged += URLChanged;
-
-            Rebuild();
         }
 
         public void SetDownloadCallback(Func<DownloadableTrackEntry, TracksDownloader, IEnumerator> callback) =>
@@ -105,7 +104,7 @@ namespace CybergrindMusicExplorer.Scripts
         public void DisplayMessage(string error)
         {
             loadingRing.SetActive(false);
-            errorField.text = error;
+            errorField.GetComponent<TextMeshProUGUI>().text = error;
         }
 
         public void ShowDownloadProgressMessage() =>
