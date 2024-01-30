@@ -1,8 +1,8 @@
 using System;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace CybergrindMusicExplorer.GUI.Elements
 {
@@ -13,7 +13,7 @@ namespace CybergrindMusicExplorer.GUI.Elements
         private int tmpValue;
         public event Action<int> OnChanged;
 
-        public Text textValue;
+        public TextMeshProUGUI textValue;
         public CounterButton increase;
         public CounterButton decrease;
 

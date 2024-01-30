@@ -60,11 +60,9 @@
         <Compile Include="CybergrindMusicExplorer.cs" />
         <Compile Include="CybergrindMusicExplorerManager.cs" />
         <Compile Include="Data\CgmePreferences.cs" />
-        <Compile Include="Data\CustomPlaylist.cs" />
         <Compile Include="Data\CustomSongData.cs" />
         <Compile Include="Data\CustomTrackMetadata.cs" />
         <Compile Include="Data\GitHubLatest.cs" />
-        <Compile Include="Data\TrackReference.cs" />
         <Compile Include="Data\SoundtrackType.cs" />
         <Compile Include="Downloader\QueueManager.cs" />
         <Compile Include="Downloader\Data\Soundcloud\SoundcloudPlaylistResponse.cs" />
@@ -84,22 +82,25 @@
         <Compile Include="GUI\Attributes\UIElement.cs" />
         <Compile Include="GUI\Controllers\CgmeMenuController.cs" />
         <Compile Include="GUI\Controllers\TerminalBrowserController.cs" />
+        <Compile Include="GUI\Controllers\TerminalPlaylistController.cs" />
         <Compile Include="GUI\Controllers\UIController.cs" />
         <Compile Include="GUI\Elements\ControlBinding.cs" />
         <Compile Include="GUI\Elements\Counter.cs" />
         <Compile Include="GUI\Elements\CounterButton.cs" />
-        <Compile Include="GUI\Elements\SliderWithValue.cs" />
         <Compile Include="GUI\Elements\UICustomElement.cs" />
         <Compile Include="GUI\GUIManager.cs" />
         <Compile Include="GUI\CgmeMenuDeployer.cs" />
         <Compile Include="Patches\AudioMixerControllerPatch.cs" />
         <Compile Include="Patches\CustomMusicPlayerPatch.cs" />
-        <Compile Include="Components\EnhancedMusicBrowser.cs" />
-        <Compile Include="Components\EnhancedMusicPlaylistEditor.cs" />
+        <Compile Include="Components\EnhancedMusicFileBrowser.cs" />
+        <Compile Include="Patches\CustomMusicPlaylistEditorPatch.cs" />
+        <Compile Include="Patches\FileDirectoryTreePatch.cs" />
         <Compile Include="Patches\FinalCyberRankPatch.cs" />
+        <Compile Include="Patches\MusicChangerPatch.cs" />
         <Compile Include="Patches\MusicManagerPatch.cs" />
         <Compile Include="Patches\OptionsMenuToManagerPatch.cs" />
         <Compile Include="Patches\Patches.cs" />
+        <Compile Include="Patches\PlaylistPatch.cs" />
         <Compile Include="PluginInfo.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Resources.Designer.cs">
@@ -116,8 +117,10 @@
         <Compile Include="Scripts\UI\DownloadableTrackEntry.cs" />
         <Compile Include="Scripts\UI\DownloadStatusBar.cs" />
         <Compile Include="Scripts\UI\FfmpegDownloadSection.cs" />
+        <Compile Include="Scripts\UI\Manual\ManualSectionButton.cs" />
         <Compile Include="Scripts\UI\Paginator.cs" />
         <Compile Include="Scripts\UI\ShopButtonCallback.cs" />
+        <Compile Include="Scripts\UI\SliderAndValue.cs" />
         <Compile Include="Scripts\UI\TerminalBrowserConfirmationWindow.cs" />
         <Compile Include="Scripts\UI\TerminalBrowserWindow.cs" />
         <Compile Include="Scripts\Utils\Ffmpeg.cs" />
@@ -125,6 +128,8 @@
         <Compile Include="Util\DeckShuffled.cs" />
         <Compile Include="Util\HttpUtils.cs" />
         <Compile Include="Util\JsonUtils.cs" />
+        <Compile Include="Util\KeyUtils.cs" />
+        <Compile Include="Util\MetadataUtils.cs" />
         <Compile Include="Util\Patching\PatchRequest.cs" />
         <Compile Include="Util\PathsUtils.cs" />
         <Compile Include="Util\ReflectionUtils.cs" />
@@ -152,6 +157,12 @@
         </Reference>
         <Reference Include="UnityEngine">
             <HintPath>$(ManagedDir)UnityEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityInputSystem">
+            <HintPath>$(ManagedDir)Unity.InputSystem.dll</HintPath>
+        </Reference>        
+        <Reference Include="UnityTextMeshPro">
+            <HintPath>$(ManagedDir)Unity.TextMeshPro.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngineAudioModule">
             <HintPath>$(ManagedDir)UnityEngine.AudioModule.dll</HintPath>
@@ -227,17 +238,22 @@
       <None Include="packages.config" />
     </ItemGroup>
     <ItemGroup>
+      <PackageReference Include="ILRepack" Version="2.0.18" />
+      <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.26">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
       <PackageReference Include="Xabe.FFmpeg" Version="5.2.6" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <Target Name="CopyModDlls" AfterTargets="ILRepacker">
         <Copy SourceFiles="$(OutDir)/$(AssemblyName).dll" DestinationFolder="$(BepInExPluginsDir)CybergrindMusicExplorer\" />
     </Target>
-    <Import Project="..\packages\ILRepack.Lib.MSBuild.Task.2.0.18.2\build\ILRepack.Lib.MSBuild.Task.targets" Condition="Exists('..\packages\ILRepack.Lib.MSBuild.Task.2.0.18.2\build\ILRepack.Lib.MSBuild.Task.targets')" />
+    <Import Project="ILRepack.targets" Condition="Exists('ILRepack.targets')" />
     <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
       <PropertyGroup>
-        <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
+        <ErrorText>ILRepack.targets is missing</ErrorText>
       </PropertyGroup>
-      <Error Condition="!Exists('..\packages\ILRepack.Lib.MSBuild.Task.2.0.18.2\build\ILRepack.Lib.MSBuild.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ILRepack.Lib.MSBuild.Task.2.0.18.2\build\ILRepack.Lib.MSBuild.Task.targets'))" />
+      <Error Condition="!Exists('ILRepack.targets')" Text="$(ErrorText)" />
     </Target>
 </Project>

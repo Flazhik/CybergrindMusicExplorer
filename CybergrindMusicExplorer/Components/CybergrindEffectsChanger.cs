@@ -38,10 +38,7 @@ namespace CybergrindMusicExplorer.Components
                 SpecialEffectsDirectory.Create();
         }
 
-        private static void Prepare(Scene scene)
-        {
-            Instance.StartCoroutine(Load(scene));
-        }
+        private static void Prepare(Scene scene) => Instance.StartCoroutine(Load(scene));
         
         private static IEnumerator Load(Scene scene)
         {
@@ -103,8 +100,6 @@ namespace CybergrindMusicExplorer.Components
         }
 
         private static FileInfo SpecialTrack(string fileName)
-        {
-            return new FileInfo(Path.Combine(SpecialEffectsDirectory.FullName, fileName));
-        }
+            => new FileInfo(Path.Combine(SpecialEffectsDirectory.FullName, fileName));
     }
 }

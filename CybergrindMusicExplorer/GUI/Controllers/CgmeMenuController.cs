@@ -9,10 +9,12 @@ using CybergrindMusicExplorer.GUI.Attributes;
 using CybergrindMusicExplorer.GUI.Elements;
 using CybergrindMusicExplorer.Scripts;
 using CybergrindMusicExplorer.Scripts.Data;
+using CybergrindMusicExplorer.Scripts.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static ControlsOptions;
 using static CybergrindMusicExplorer.Util.VersionUtils;
+using static CybergrindMusicExplorer.Util.KeyUtils;
 using Debug = UnityEngine.Debug;
 
 namespace CybergrindMusicExplorer.GUI.Controllers
@@ -22,6 +24,8 @@ namespace CybergrindMusicExplorer.GUI.Controllers
         private const string ThunderUrl = "https://thunderstore.io/package/download/Flazhik/CybergrindMusicExplorer";
         private const string GithubUrl = "https://github.com/Flazhik/CybergrindMusicExplorer/releases/download";
         public event Action OnClose;
+        public event EndSliderDragEvent OnScaled;
+        
         private readonly PrefsManager prefsManager = PrefsManager.Instance;
         private readonly OptionsMenuToManager optionsManager = OptionsMenuToManager.Instance;
         private readonly AudioMixerController mixer = AudioMixerController.Instance;
@@ -42,8 +46,10 @@ namespace CybergrindMusicExplorer.GUI.Controllers
         private Toggle showPanelIndefinitely;
         [UIElement("Menu/General/Subtitles/Controller/Checkbox")]
         private Toggle subtitles;
-        [UIElement("Menu/General/Boost/Controller/Slider")]
-        private SliderWithValue boost;
+        [UIElement("Menu/General/Boost/Controller/Slider/Slider")]
+        private SliderAndValue boost;
+        [UIElement("Menu/General/Scale/Controller/Slider/Slider")]
+        private SliderAndValue scale;
         [UIElement("Menu/General/PreventDuplicates/Controller/Checkbox")]
         private Toggle preventDuplicates;
         [UIElement("Menu/Bindings/ShowMenuHotkey/Controller/CGMEMenu")]
@@ -62,7 +68,7 @@ namespace CybergrindMusicExplorer.GUI.Controllers
         private GameObject specialEnemiesList;
         [UIElement("ThunderDownload")] private Button thunderDownload;
         [UIElement("GithubDownload")] private Button githubDownload;
-        [UIElement("Version")] private Text version;
+        [UIElement("Version")] private TextMeshProUGUI version;
         [UIElement("Close")] private Button close;
 
         private Coroutine downloaderCoroutine;
@@ -98,36 +104,60 @@ namespace CybergrindMusicExplorer.GUI.Controllers
             subtitles.isOn = prefsManager.GetBool("subtitlesEnabled");
             subtitles.onValueChanged.AddListener(state =>
                 optionsManager.SetSubtitles(state));
-
+            
             boost.value.text = $"+{Manager.CustomTracksBoost}dB";
-            boost.slider.value = Manager.CustomTracksBoost;
-            boost.slider.onValueChanged.AddListener(value =>
+            boost.Value = Manager.CustomTracksBoost;
+            boost.OnValueChanged.AddListener(value =>
             {
                 boost.value.text = $"+{value}dB";
                 Manager.CustomTracksBoost = value;
                 mixer.SetMusicVolume(mixer.musicVolume);
             });
             
+            scale.value.text = $"{Manager.MenuUpscale}%";
+            scale.Value = Manager.MenuUpscale;
+            scale.OnValueChanged.AddListener(value =>
+            {
+                scale.value.text = $"{value}%";
+            });
+
+            scale.EndDrag += value => Manager.MenuUpscale = value;
+            scale.EndDrag += value => OnScaled?.Invoke(value);
+            
             preventDuplicates.isOn = Manager.PreventDuplicateTracks;
             preventDuplicates.onValueChanged.AddListener(state =>
             {
                 Manager.PreventDuplicateTracks = state;
-                if (state)
-                    CybergrindMusicExplorer.GetEnhancedPlaylistEditor().RemoveDuplicates();
+                if (!state)
+                    return;
+                
+                var playlistEditor = CybergrindMusicExplorer.GetPlaylistEditor();
+                var playlist = playlistEditor.playlist;
+                
+                var duplicates = new List<Playlist.SongIdentifier>();
+                for (var i = 0; playlist.ids.ElementAtOrDefault(i) != default; i++)
+                    if (duplicates.Contains(playlist.ids[i]))
+                    {
+                        playlist.Remove(i);
+                        i--;
+                    }
+                    else
+                        duplicates.Add(playlist.ids[i]);
+                
+                playlistEditor.Rebuild();
             });
-
         }
 
         private void BindHotkeys()
         {
             showMenuHotkey.button.onClick.AddListener(() => ChangeKey(showMenuHotkey.button.gameObject));
-            showMenuHotkey.value.text = GetKeyName((KeyCode)Manager.MenuBinding);
+            showMenuHotkey.value.text = ToHumanReadable((KeyCode)Manager.MenuBinding);
 
             nextTrackHotkey.button.onClick.AddListener(() => ChangeKey(nextTrackHotkey.button.gameObject));
-            nextTrackHotkey.value.text = GetKeyName((KeyCode)Manager.NextTrackBinding);
+            nextTrackHotkey.value.text = ToHumanReadable((KeyCode)Manager.NextTrackBinding);
 
             playbackHotkey.button.onClick.AddListener(() => ChangeKey(playbackHotkey.button.gameObject));
-            playbackHotkey.value.text = GetKeyName((KeyCode)Manager.PlaybackMenuBinding);
+            playbackHotkey.value.text = ToHumanReadable((KeyCode)Manager.PlaybackMenuBinding);
         }
 
         private void SetupThemes()
@@ -198,7 +228,7 @@ namespace CybergrindMusicExplorer.GUI.Controllers
             {
                 var enemyType = pair.Key;
                 var enemyCounter = Instantiate(enemyCounterPrefab, specialEnemiesList.transform);
-                enemyCounter.transform.Find("EnemyName").GetComponent<Text>().text = pair.Value;
+                enemyCounter.transform.Find("EnemyName").GetComponent<TextMeshProUGUI>().text = pair.Value;
 
                 var image = enemyCounter.transform.Find("Image").GetComponent<Image>();
                 image.color = Color.white;

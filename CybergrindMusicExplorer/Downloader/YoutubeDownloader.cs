@@ -151,11 +151,12 @@ namespace CybergrindMusicExplorer.Downloader
                 downloader.ShowRestartButton();
                 downloader.IncreaseDownloaded();
                 entry.State = DownloadableTrackEntryState.Downloaded;
+                AddTrackToPlaylist(Path.Combine(YouTubeDirPath.FullName, $"{Path.GetFileNameWithoutExtension(inputFile)}.mp3"));
             }
             else
             {
                 entry.State = DownloadableTrackEntryState.Failed;
-                downloader.IncreaseDownloaded();
+                downloader.IncreaseFailed();
             }
         }
 

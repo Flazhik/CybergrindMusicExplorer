@@ -36,7 +36,7 @@ namespace CybergrindMusicExplorer.Scripts.Utils
             {
                 webClient.Proxy = null;
                 webClient.DownloadProgressChanged +=
-                    (sender, e) => downloadSection.DownloadingStatusUpdate(e.ProgressPercentage);
+                    (sender, e) => downloadSection.DownloadStatusUpdate(e.ProgressPercentage);
                 webClient.DownloadFileCompleted +=
                     (sender, e) => UnzipFfmpeg(downloadSection);
                 try

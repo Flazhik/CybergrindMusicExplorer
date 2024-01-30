@@ -8,7 +8,7 @@ namespace CybergrindMusicExplorer.Util.Patching
     public class PatchRequest
     {
         private const BindingFlags TargetMethodBindingAttributes =
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
         private const BindingFlags HarmonyPatchesAttributes =
             BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;

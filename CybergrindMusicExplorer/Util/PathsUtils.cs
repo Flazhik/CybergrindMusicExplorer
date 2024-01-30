@@ -13,7 +13,6 @@ namespace CybergrindMusicExplorer.Util
         private const string FallbackUltrakillPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\ULTRAKILL";
 
         public static readonly string CgmePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        public static readonly string PlaylistJsonPath = Path.Combine(UltrakillPath, "Preferences", "EnhancedPlaylist.json");
         public static readonly string CgmeJsonPath = Path.Combine(UltrakillPath, "Preferences", "CgmePreferences.json");
         public static readonly string CustomSongsPath = Path.Combine(UltrakillPath, "CyberGrind", "Music");
         
@@ -38,6 +37,19 @@ namespace CybergrindMusicExplorer.Util
                 .Select(reservedWord => $"^{reservedWord}\\.")
                 .Aggregate(sanitisedNamePart, (current, reservedWordPattern) =>
                     Regex.Replace(current, reservedWordPattern, "_reservedWord_.", RegexOptions.IgnoreCase));
+        }
+        
+        public static string RelativePathToDirectory(IDirectoryTree<FileInfo> directory)
+        {
+            var result = string.Empty;
+            var currentDir = directory;
+            while (currentDir.parent != null)
+            {
+                result = currentDir.name + "\\" + result;
+                currentDir = currentDir.parent;
+            }
+
+            return result;
         }
     }
 }

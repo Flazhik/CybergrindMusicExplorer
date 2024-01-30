@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
+using HarmonyLib;
 
 namespace CybergrindMusicExplorer.Util
 {
@@ -10,8 +12,7 @@ namespace CybergrindMusicExplorer.Util
         private static readonly BindingFlags BindingFlags = BindingFlags.Instance | BindingFlags.Public |
                                                             BindingFlags.NonPublic | BindingFlags.FlattenHierarchy;
 
-        private static readonly BindingFlags BindingFlagsFields =
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        private const BindingFlags BindingFlagsFields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         public static void CloneInstance<TNewType, TOldType>(
             TOldType oldInstance,
@@ -48,8 +49,14 @@ namespace CybergrindMusicExplorer.Util
 
         public static void SetPrivate<T, TV>(T instance, Type classType, string field, TV value)
         {
-            var privateField = classType.GetField(field, BindingFlagsFields);
+            var privateField = classType.GetField(field, BindingFlagsFields | BindingFlags.SetField);
             privateField.SetValue(instance, value);
+        }        
+        
+        public static void CallPrivate<T>(T instance, Type classType, string method)
+        {
+            var privateMethod = classType.GetMethod(method, BindingFlags.NonPublic | BindingFlags.Instance);
+            privateMethod.Invoke(instance, new object[] { });
         }
 
         private static void ClonePrivateBaseField<TNewType, TOldType>(string fieldName, TOldType fromObj,
@@ -76,5 +83,8 @@ namespace CybergrindMusicExplorer.Util
                 }
             } while (!found && source != null && derived != null);
         }
+        
+        public static IEnumerable<CodeInstruction> IL(params (OpCode, object)[] instructions) =>
+            instructions.Select(i => new CodeInstruction(i.Item1, i.Item2)).ToList();
     }
 }

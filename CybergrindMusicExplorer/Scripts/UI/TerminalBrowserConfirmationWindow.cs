@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -18,7 +19,7 @@ namespace CybergrindMusicExplorer.Scripts.UI
         public void ShowWarning(string message, UnityAction action)
         {
             gameObject.SetActive(true);
-            warningMessage.GetComponent<Text>().text = message;
+            warningMessage.GetComponent<TextMeshProUGUI>().text = message;
             acceptButton.GetComponent<Button>().onClick.RemoveAllListeners();
             acceptButton.GetComponent<Button>().onClick.AddListener(action);
             acceptButton.GetComponent<Button>().onClick.AddListener(() => gameObject.SetActive(false));

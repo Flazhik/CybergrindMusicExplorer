@@ -3,42 +3,23 @@ using UnityEngine;
 
 namespace CybergrindMusicExplorer.Data
 {
-    public class CustomSongData : Playlist.SongData
+    public class CustomSongData : SoundtrackSong
     {
-        public AudioClip CalmLoopClip;
-        public AudioClip CalmIntroClip;
-        public List<UnlockCondition> conditions;
-        public string extraLevelBit;
-
-        public CustomSongData(
-            string name,
-            Sprite icon,
-            AudioClip introClip,
-            List<AudioClip> clips,
-            int maxClips,
-            AudioClip calmLoopClip,
-            AudioClip calmIntroClip) : base(name, icon, introClip, clips, maxClips)
-        {
-            CalmLoopClip = calmLoopClip;
-            CalmIntroClip = calmIntroClip;
-        }
+        public AudioClip calmLoopClip;
+        public AudioClip calmIntroClip;
 
         public static CustomSongData FromSoundtrack(SoundtrackSong song, AudioClip calmLoopTheme, AudioClip calmIntroClip)
         {
-            var data = new CustomSongData(
-                song.songName + $" <color=grey>{song.extraLevelBit}</color>",
-                song.icon,
-                song.introClip,
-                song.clips,
-                song.maxClipsIfNotRepeating,
-                calmLoopTheme,
-                calmIntroClip
-                )
-            {
-                conditions = song.conditions,
-                extraLevelBit = song.extraLevelBit
-            };
-
+            var data = CreateInstance<CustomSongData>();
+            data.icon = song.icon;
+            data.songName = song.songName;
+            data.introClip = song.introClip;
+            data.clips = song.clips;
+            data.maxClipsIfNotRepeating = song.maxClipsIfNotRepeating;
+            data.conditions = song.conditions;
+            data.levelName = song.levelName;
+            data.calmIntroClip = calmIntroClip;
+            data.calmLoopClip = calmLoopTheme;
             return data;
         }
         
@@ -51,15 +32,16 @@ namespace CybergrindMusicExplorer.Data
             string artist,
             Sprite icon)
         {
-            var alt = artist ?? "Custom song";
-            return new CustomSongData(
-                title + $" <color=grey>{alt}</color>",
-                icon,
-                intro,
-                new List<AudioClip> { loop }, 
-                1,
-                calmLoop,
-                calmIntro);
+            var data = CreateInstance<CustomSongData>();
+            data.icon = icon;
+            data.songName = title;
+            data.introClip = intro;
+            data.clips = new List<AudioClip> { loop };
+            data.conditions = new List<UnlockCondition>();
+            data.levelName = artist;
+            data.calmIntroClip = calmIntro;
+            data.calmLoopClip = calmLoop;
+            return data;
         }
     }
 }

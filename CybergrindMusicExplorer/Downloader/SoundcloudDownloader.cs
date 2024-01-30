@@ -176,6 +176,7 @@ namespace CybergrindMusicExplorer.Downloader
                 downloader.ShowRestartButton();
                 downloader.IncreaseDownloaded();
                 entry.State = DownloadableTrackEntryState.Downloaded;
+                AddTrackToPlaylist(Path.Combine(SoundCloudDirPath.FullName, $"{Path.GetFileNameWithoutExtension(trackFile)}.mp3"));
             }
             else
             {

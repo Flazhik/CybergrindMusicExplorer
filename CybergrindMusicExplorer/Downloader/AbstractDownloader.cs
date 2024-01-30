@@ -41,6 +41,12 @@ namespace CybergrindMusicExplorer.Downloader
 
         protected abstract void CancelAll();
         
+        protected static void AddTrackToPlaylist(string path)
+        {
+            if (CybergrindMusicExplorerManager.Instance.AddDownloadedTracks)
+                CybergrindMusicExplorer.GetPlaylistEditor().playlist.Add(new Playlist.SongIdentifier(path, Playlist.SongIdentifier.IdentifierType.File));
+        }
+        
         protected static void CreateFolderIfMissing(DirectoryInfo directory)
         {
             if (!directory.Exists)
