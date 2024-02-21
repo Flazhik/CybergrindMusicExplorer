@@ -13,8 +13,9 @@ using File = TagLib.File;
 
 namespace CybergrindMusicExplorer.Components
 {
-    public class TracksLoader
+    public class TracksLoader: MonoSingleton<TracksLoader>
     {
+        public static Sprite defaultIcon;
         private static readonly (string, string) IntoTheFire = ("9969a3a31df68144ea5ddf0a74488bf6", "28cc2290236220e46b5e2db27a72bfe7");
         private static readonly Dictionary<string, string> CleanThemesReferences = new Dictionary<string, string>
         {
@@ -45,11 +46,10 @@ namespace CybergrindMusicExplorer.Components
         private readonly Dictionary<Playlist.SongIdentifier, CustomSongData> soundtrackCache = new Dictionary<Playlist.SongIdentifier, CustomSongData>();
         private readonly Dictionary<string, List<List<SubtitleItem>>> subtitlesCache =
             new Dictionary<string, List<List<SubtitleItem>>>();
-        private readonly Sprite defaultIcon;
 
-        public TracksLoader(Sprite defaultIcon)
+        public void SetDefaultIcon(Sprite icon)
         {
-            this.defaultIcon = defaultIcon;
+            defaultIcon = icon;
         }
 
         public IEnumerator LoadSongData(Playlist.SongIdentifier reference, Action<CustomSongData> callback)

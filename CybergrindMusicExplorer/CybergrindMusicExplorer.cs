@@ -90,6 +90,8 @@ namespace CybergrindMusicExplorer
             PatchCustomMusicPlaylistEditor();
             PatchDirectoryTree();
             PatchFinalCyberRank();
+            PatchWaveMenu();
+            PatchScreenZone();
 
             EnhancedMusicFileBrowser.OnInit += OnEnhancedBrowserInit;
             var oldBrowser = FindObjectOfType<CustomMusicFileBrowser>();

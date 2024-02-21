@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using CybergrindMusicExplorer.GUI.Controllers;
+using CybergrindMusicExplorer.Components;
+using CybergrindMusicExplorer.Data;
 using HarmonyLib;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -16,9 +17,8 @@ namespace CybergrindMusicExplorer.Patches
     public class CustomMusicPlaylistEditorPatch
     {
         private static readonly Dictionary<string, Playlist.SongMetadata> MetadataCache = new Dictionary<string, Playlist.SongMetadata>();
-        private static TerminalPlaylistController playlistController;
         private static GameObject clearButton;
-
+        
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CustomMusicPlaylistEditor), "GetSongMetadataFromFilepath")]
         public static bool CustomMusicPlaylistEditor_GetSongMetadataFromFilepath_Prefix(
@@ -86,6 +86,34 @@ namespace CybergrindMusicExplorer.Patches
             __instance.playlist = newPlaylist;
             __instance.SavePlaylist();
             return true;
+        }
+        
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CustomMusicPlaylistEditor), "Select")]
+        public static void CustomMusicPlaylistEditor_Select_Postfix(
+            int newIndex,
+            bool rebuild,
+            CustomMusicPlaylistEditor __instance)
+        {
+            if (!CybergrindMusicExplorerManager.Instance.EnableTracksPreview || !rebuild)
+                return;
+            
+            var shopping = FistControl.Instance.shopping;
+            
+            if (!shopping)
+                return; 
+
+            var tracksLoader = TracksLoader.Instance;
+            var newId = __instance.playlist.ids[newIndex];
+
+            tracksLoader.StartCoroutine(newId.type == Playlist.SongIdentifier.IdentifierType.Addressable
+                ? tracksLoader.LoadSongData(newId, LoadedPreviewCallback)
+                : tracksLoader.LoadSongData(new FileInfo(newId.path), LoadedPreviewCallback, s => { }));
+            
+            void LoadedPreviewCallback(CustomSongData selectedSong)
+            {
+                Object.FindObjectOfType<ScreenZoneHelper>().PlayPreview(selectedSong.clips[0]);
+            }
         }
     }
 }

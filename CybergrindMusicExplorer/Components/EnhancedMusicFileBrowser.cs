@@ -26,6 +26,7 @@ namespace CybergrindMusicExplorer.Components
         private CybergrindMusicExplorerManager manager = CybergrindMusicExplorerManager.Instance;
         private CyberGrindSettingsNavigator navigator;
         private CustomMusicPlaylistEditor playlistEditorLogic;
+        private TracksLoader tracksLoader;
         private GameObject playlistEditor;
         private GameObject loadingPrefab;
         private Sprite defaultIcon;
@@ -50,6 +51,8 @@ namespace CybergrindMusicExplorer.Components
             RewireButtonTo(ControlButton("ImageSelectorWrapper/BackButton"), StepUp);
             InstantiateLoadAllButton();
 
+            tracksLoader = TracksLoader.Instance;
+            tracksLoader.SetDefaultIcon(defaultIcon);
             StartCoroutine(WaitForGui());
         }
 

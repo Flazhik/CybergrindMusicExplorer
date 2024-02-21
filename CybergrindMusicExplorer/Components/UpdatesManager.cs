@@ -23,7 +23,7 @@ namespace CybergrindMusicExplorer.Components
             try
             {
                 Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                Client.DefaultRequestHeaders.UserAgent.TryParseAdd("CybergrindMusicExplorer/1.6.1");
+                Client.DefaultRequestHeaders.UserAgent.TryParseAdd("CybergrindMusicExplorer/1.6.2");
                 Client.Timeout = FromSeconds(5);
 
                 var raw = await Client.GetStringAsync(GitHubUrl);

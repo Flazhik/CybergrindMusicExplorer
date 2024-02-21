@@ -92,6 +92,11 @@ namespace CybergrindMusicExplorer.Patches
                 .WithPrefix(typeof(CustomMusicPlaylistEditorPatch), "CustomMusicPlaylistEditor_LoadPlaylist_Prefix")
                 .Using(Harmony)
                 .Once();
+            
+            PatchMethod(typeof(CustomMusicPlaylistEditor), "Select")
+                .WithPostfix(typeof(CustomMusicPlaylistEditorPatch), "CustomMusicPlaylistEditor_Select_Postfix")
+                .Using(Harmony)
+                .Once();
         }        
         
         public static void PatchPlaylist()
@@ -116,6 +121,22 @@ namespace CybergrindMusicExplorer.Patches
             
             PatchMethod(typeof(FileDirectoryTree), "Refresh")
                 .WithPrefix(typeof(FileDirectoryTreePatch), "FileDirectoryTree_Refresh_Prefix")
+                .Using(Harmony)
+                .Once();
+        }
+
+        public static void PatchWaveMenu()
+        {
+            PatchMethod(typeof(WaveMenu), "Start")
+                .WithPostfix(typeof(WaveMenuPatch), "WaveMenu_Start_Postfix")
+                .Using(Harmony)
+                .Once();
+        }
+        
+        public static void PatchScreenZone()
+        {
+            PatchMethod(typeof(ScreenZone), "Update")
+                .WithPrefix(typeof(ScreenZonePatch), "ScreenZone_Update_Prefix")
                 .Using(Harmony)
                 .Once();
         }

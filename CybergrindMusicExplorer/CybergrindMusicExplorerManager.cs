@@ -42,6 +42,18 @@ namespace CybergrindMusicExplorer
             set => prefsManager.SetBoolLocal("cyberGrind.musicExplorer.addDownloadedTracks", value);
         }
         
+        public bool EnableTracksPreview
+        {
+            get => prefsManager.GetBoolLocal("cyberGrind.musicExplorer.enableTracksPreview", true);
+            set => prefsManager.SetBoolLocal("cyberGrind.musicExplorer.enableTracksPreview", value);
+        }        
+        
+        public bool ShowBigNowPlayingPanel
+        {
+            get => prefsManager.GetBoolLocal("cyberGrind.musicExplorer.bigNowPlayingPanel", true);
+            set => prefsManager.SetBoolLocal("cyberGrind.musicExplorer.bigNowPlayingPanel", value);
+        }
+        
         public int CalmThemeEnemiesThreshold
         {
             get => prefsManager.GetIntLocal("cyberGrind.musicExplorer.calmThemeEnemiesThreshold", 2);
@@ -60,6 +72,8 @@ namespace CybergrindMusicExplorer
         public int MenuBinding => prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMEMenu", 285);
         
         public int PlaybackMenuBinding => prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMEPlaybackMenu", 96);
+        
+        public int DisablePlayerBinding => prefsManager.GetIntLocal("cyberGrind.musicExplorer.keyBinding.CGMEDisablePlayer", 291);
 
         public void SetIntLocal(string key, int content)
         {

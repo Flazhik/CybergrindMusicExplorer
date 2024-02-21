@@ -6,11 +6,13 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using static CybergrindMusicExplorer.Components.TracksLoader;
 using static CybergrindMusicExplorer.Util.PathsUtils;
+using static CybergrindMusicExplorer.Util.ReflectionUtils;
 
 namespace CybergrindMusicExplorer.Components
 {
     public class CybergrindEffectsChanger: MonoSingleton<CybergrindEffectsChanger>
     {
+        private const string TerminalPath = "/FirstRoom/Room/CyberGrindSettings";
         private static bool _initialized;
 
         public void Start()
@@ -47,6 +49,7 @@ namespace CybergrindMusicExplorer.Components
             yield return OverrideCheer(crowdReaction);
             yield return OverrideLongerCheer(crowdReaction);
             yield return OverrideAww(crowdReaction);
+            yield return OverrideMenu();
             yield return null;
         }
 
@@ -91,6 +94,24 @@ namespace CybergrindMusicExplorer.Components
                 yield break;
             
             yield return LoadTrack(file, aww => reactions.aww = aww);
+            yield return null;
+        }
+        
+        private static IEnumerator OverrideMenu()
+        {
+            var file = SpecialTrack("menu.mp3");
+            if (!file.Exists)
+                yield break;
+            
+            var screenZone = GameObject.Find(TerminalPath).GetComponent<ScreenZone>();
+            var terminalMusic = (AudioSource)GetPrivate(screenZone, typeof(ScreenZone), "music");
+
+            yield return LoadTrack(file, menu =>
+            {
+                terminalMusic.volume = 1f;
+                terminalMusic.clip = menu;
+                terminalMusic.Play();
+            });
             yield return null;
         }
 

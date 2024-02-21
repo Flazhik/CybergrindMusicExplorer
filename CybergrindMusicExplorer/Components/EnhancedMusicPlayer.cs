@@ -15,10 +15,13 @@ namespace CybergrindMusicExplorer.Components
     public class EnhancedMusicPlayer : MonoBehaviour
     {
         private const int NextTrackTimeout = 100;
-        
+
         private CanvasGroup panelGroup;
+        private GameObject bigPanel;
         private Text panelText;
         private Image panelIcon;
+        private Text bigPanelText;
+        private Image bigPanelIcon;
         private CustomMusicPlaylistEditor playlistEditor;
         private Sprite defaultIcon;
         public float panelApproachTime;
@@ -31,13 +34,14 @@ namespace CybergrindMusicExplorer.Components
         private readonly OptionsManager optionsManager = OptionsManager.Instance;
 
         private bool stopped;
+        private bool disabled;
         private bool nextTrack;
         private int currentTrackPosition;
         private int timeout;
 
         private void Awake()
         {
-            tracksLoader = new TracksLoader(defaultIcon);
+            tracksLoader = TracksLoader.Instance;
             CloneInstance(FindObjectOfType<CustomMusicPlayer>(), this,
                 fieldsToIgnore: new List<string> { "playlistEditor" });
             playlistEditor = CybergrindMusicExplorer.GetPlaylistEditor();
@@ -51,12 +55,35 @@ namespace CybergrindMusicExplorer.Components
 
         private void Update()
         {
+            if (Input.GetKeyDown((KeyCode)manager.NextTrackBinding))
+                nextTrack = true;
+
+            if (Input.GetKeyDown((KeyCode)manager.DisablePlayerBinding))
+            {
+                if (disabled)
+                    nextTrack = true;
+                else
+                {
+                    bigPanelIcon.sprite = defaultIcon;
+                    bigPanelText.text = "<color=red>[PLAYER DISABLED]</color>";
+                    musicManager.StopMusic();
+                }
+
+                disabled = !disabled;
+            }
+            
             if (timeout != 0)
                 timeout = (int)Mathf.MoveTowards(timeout, 0, 1);
-            if (Input.GetKeyDown((KeyCode)manager.NextTrackBinding)) nextTrack = true;
+            
+            if (bigPanel != null)
+                bigPanel.SetActive(manager.ShowBigNowPlayingPanel);
         }
 
-        public void OnEnable() => StartPlaylist();
+        public void OnEnable()
+        {
+            InstantiateBigPanel();
+            StartPlaylist();
+        }
 
         public void StartPlaylist()
         {
@@ -71,7 +98,9 @@ namespace CybergrindMusicExplorer.Components
         private IEnumerator ShowPanelRoutine(Playlist.SongMetadata song)
         {
             panelText.text = song.displayName.ToUpper();
+            bigPanelText.text = song.displayName.ToUpper();
             panelIcon.sprite = song.icon != null ? song.icon : defaultIcon;
+            bigPanelIcon.sprite = panelIcon.sprite;
             var time = 0.0f;
             while (time < (double)panelApproachTime)
             {
@@ -95,12 +124,15 @@ namespace CybergrindMusicExplorer.Components
 
             panelGroup.alpha = 0.0f;
         }
-
+        
         private IEnumerator PlaylistRoutine()
         {
             IEnumerator currentSubtitlesRoutine = default;
             var songFinished = new WaitUntil(() =>
-                TrackHasReachedTheEnd(musicManager.targetTheme) && Application.isFocused && !stopped || nextTrack);
+                TrackHasReachedTheEnd(musicManager.targetTheme)
+                && Application.isFocused
+                && !disabled
+                && !stopped || nextTrack);
 
             var lastSong = (Playlist.SongIdentifier)null;
             var first = true;
@@ -241,7 +273,24 @@ namespace CybergrindMusicExplorer.Components
             timeout = NextTrackTimeout;
             
             return new WaitUntil(
-                () => musicManager.targetTheme.isPlaying && musicManager.targetTheme.time != 0.0f || nextTrack || timeout == 0);
+                () => musicManager.targetTheme.isPlaying
+                    && musicManager.targetTheme.time != 0.0f
+                    || nextTrack
+                    || timeout == 0);
+        }
+        
+        private void InstantiateBigPanel()
+        {
+            bigPanel = Instantiate(panelGroup, EndlessGrid.Instance.enemiesLeftText.transform.parent.parent).gameObject;
+            var bigPanelTransform = bigPanel.transform;
+            Destroy(bigPanel.GetComponent<CanvasGroup>());
+            bigPanelTransform.localPosition -= new Vector3(0, 555f, 0);
+            bigPanelTransform.localScale = new Vector3(1.4f, 1.4f, 1.4f);
+            var panel = bigPanelTransform.Find("Panel");
+            bigPanelText = bigPanelTransform.Find("Panel/Text").GetComponent<Text>();
+            bigPanelIcon = bigPanelTransform.Find("Panel/Image").GetComponent<Image>();
+
+            Destroy(panel.GetComponent<Image>());
         }
     }
 }

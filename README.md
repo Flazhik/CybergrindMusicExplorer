@@ -30,7 +30,7 @@ Formerly the main focus of this mod was to allow to play custom music in Cyber G
 2. Extract the contents of **BepInEx** archive in your local **ULTRAKILL** folder. If you're not sure where this folder
    is located, find **ULTRAKILL** in your Steam Library > Right mouse click > **Properties** > **Local files** > **Browse**
 3. Download the CybergrindMusicExplorer
-   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.6.1/CybergrindMusicExplorer.v1.6.1.zip), then
+   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.6.2/CybergrindMusicExplorer.v1.6.2.zip), then
    extract its contents at **ULTRAKILL/BepInEx/plugins** (create *plugins* folder manually in case it's missing)
 
 You can also use r2modman for that. Both methods are described in the video below (click to open):
@@ -43,15 +43,26 @@ All the basic functionality is available by pressing **F4** while in Cyber Grind
 In case you forgot your CGME menu hotkey, open **Audio** section of ULTRAKILL options to check it.
 
 ## Settings
-![CGME menu](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/4a2643a1-cd93-4571-a530-69c6a6e8af52)
+![CGME menu](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/999991ff-991d-427f-b2f4-6c038f0fa7fc)
 
 All the settings for the mod are available by pressing CGME Menu hotkey (F4 by default). The main screen of the menu contains the following options:
+
+**Playback**
+
 1. **Show current track panel indefinitely**: once checked, this option will make the "Now playing" panel to be present the whole time the track is playing
-2. **Display subtitles**: enable subtitles if present. Yes, the mod supports it, but more on that later
-3. **Volume boost for custom tracks**: if your track is still too quiet, you can always add up to 10dB to it. Please use it carefully
-4. **Menu upscale**: you can make both main and playback menus a little bit bigger
-5. **Prevent duplicate tracks**: prevents tracks duplication. Once checked, deletes existing duplicates
-6. **Add downloaded tracks to playlist automatically**: all the tracks that are obtained via [Downloader](#downloader) will be added to playlist automatically
+2. **Volume boost for custom tracks**: if your track is still too quiet, you can always add up to 10dB to it. Please use it carefully
+3. **Show current track alongside wave number and enemy counter**: Display "Now playing" section on a big panel next to wave number and enemy counter
+4. **Display subtitles**: enable subtitles if present. Yes, the mod supports it, but more on that later
+
+**Playlist editing**
+
+1. **Enable tracks preview**: allows to listen to 5 seconds preview of a track by clicking on it in the terminal
+2. **Prevent duplicate tracks**: prevents tracks duplication. Once checked, deletes existing duplicates
+3. **Add downloaded tracks to playlist automatically**: all the tracks that are obtained via [Downloader](#downloader) will be added to playlist automatically
+
+**Other**
+
+**Menu upscale**: you can make both main and playback menus a little bit bigger
 
 For other settings like key bindings and Themes, use the respective tab. 
 
@@ -63,7 +74,7 @@ Allows you to switch between the tracks mid-game. Available by pressing **~** by
 If the whole menu is an overkill for you, just switch between tracks using **Next track** hotkey.
 
 ## Downloader
-![Downloader window](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/7d9974e5-48f5-43d7-805a-97320a48412a)
+![Downloader window](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/3ecbfbce-570e-4079-8baa-126dad5da171)
 ![YouCloud](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/439727a4-8220-4cac-ba8f-4b772fbc951c)
 
 You can now download tracks directly from **YouTube** and **SoundCloud**.
@@ -77,6 +88,14 @@ Downloaded tracks will be placed inside **_ULTRAKILL/Cybergrind/Music_** directo
 
 This feature uses ffmpeg. It's a 3rd-party library which you'll be offered to download automatically from the official source. You're at liberty not to do it, but in this case Downloader functionality won't be available to you.
 ffmpeg executables will be placed within the folder where **CybergrindMusicExplorer.dll** is located.
+
+### What if for some reason you can't install ffmpeg by means of CGME?
+You can perform it manually.
+
+1. Download ffmpeg archive manually from [here](https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip)
+2. Open the folder `ffmpeg-master-latest-win64-gpl\bin` inside it
+3. Extract `ffmpeg.exe` and `ffprobe.exe` into the same folder where `CybergrindMusicExplorer.dll` is located.
+   If you've installed the mod manually, it's `ULTRAKILL\BepInEx\plugins\CybergrindMusicExplorer`. If you're using r2modman the path is a little bit trickier: `C:\Users\{YourUsername}\AppData\Roaming\r2modmanPlus-local\ULTRAKILL\profiles\{ProfileName}\BepInEx\plugins\Flazhik-CybergrindMusicExplorer\CybergrindMusicExplorer`
 
 Please also note that this feature is in early stage of development and may not work consistently.
 
@@ -136,10 +155,11 @@ Here's the list of file names and the references to the sound effects these file
 
 - **cheer.mp3**: The sound of cheering when you perform a parry
 - **cheer_long.mp3**: The sound of cheering when you finished a wave
-- **aww.mp3**: The sound of utter dissapointment when you died
+- **menu.mp3**: Music in Terminal
+- **aww.mp3**: The sound of utter disappointment when you died
 - **end.mp3**: Results screen music
 
-![Effects replacement](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/3c2d8bca-ad1e-450c-8536-bf8b064ed1d2)
+![Effects replacement](https://github.com/Flazhik/CybergrindMusicExplorer/assets/2077991/c73a5fb5-86bd-4085-a43e-194b64f0859e)
 
 ## Subtitles support
 If a regular Cyber Grind experience is too boring for you, you can turn it into a bloody karaoke (he-he, "bloody").

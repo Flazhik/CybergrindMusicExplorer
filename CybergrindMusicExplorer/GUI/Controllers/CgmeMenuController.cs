@@ -42,15 +42,19 @@ namespace CybergrindMusicExplorer.GUI.Controllers
         [HudEffect] [UIElement("Menu/Downloader")] private TracksDownloader tracksDownloader;
         [HudEffect] [UIElement("Menu/Manual")] private GameObject manual;
         [HudEffect] [UIElement("Menu/Credits")] private GameObject credits;
-        [UIElement("Menu/General/InfinitePanel/Controller/Checkbox")]
+        [UIElement("Menu/General/ListControl/ScrollArea/Mask/Viewport/List/InfinitePanel/Controller/Checkbox")]
         private Toggle showPanelIndefinitely;
-        [UIElement("Menu/General/Subtitles/Controller/Checkbox")]
+        [UIElement("Menu/General/ListControl/ScrollArea/Mask/Viewport/List/EnablePreview/Controller/Checkbox")]
+        private Toggle enablePreview;
+        [UIElement("Menu/General/ListControl/ScrollArea/Mask/Viewport/List/Subtitles/Controller/Checkbox")]
         private Toggle subtitles;
-        [UIElement("Menu/General/Boost/Controller/Slider/Slider")]
+        [UIElement("Menu/General/ListControl/ScrollArea/Mask/Viewport/List/Boost/Controller/Slider/Slider")]
         private SliderAndValue boost;
-        [UIElement("Menu/General/Scale/Controller/Slider/Slider")]
+        [UIElement("Menu/General/ListControl/ScrollArea/Mask/Viewport/List/Scale/Controller/Slider/Slider")]
         private SliderAndValue scale;
-        [UIElement("Menu/General/PreventDuplicates/Controller/Checkbox")]
+        [UIElement("Menu/General/ListControl/ScrollArea/Mask/Viewport/List/BigNowPlayingPanel/Controller/Checkbox")]
+        private Toggle bigNowPlayingPanel;        
+        [UIElement("Menu/General/ListControl/ScrollArea/Mask/Viewport/List/PreventDuplicates/Controller/Checkbox")]
         private Toggle preventDuplicates;
         [UIElement("Menu/Bindings/ShowMenuHotkey/Controller/CGMEMenu")]
         private ControlBinding showMenuHotkey;
@@ -58,6 +62,8 @@ namespace CybergrindMusicExplorer.GUI.Controllers
         private ControlBinding nextTrackHotkey;
         [UIElement("Menu/Bindings/PlaybackHotkey/Controller/CGMEPlaybackMenu")]
         private ControlBinding playbackHotkey;
+        [UIElement("Menu/Bindings/DisablePlayerHotkey/Controller/CGMEDisablePlayer")]
+        private ControlBinding displayPlayerHotkey;
         [UIElement("Menu/Themes/EnableCalmTheme/Controller/Checkbox")]
         private Toggle calmTheme;
         [UIElement("Menu/Themes/EnemiesThreshold/Controller/Counter")]
@@ -100,6 +106,14 @@ namespace CybergrindMusicExplorer.GUI.Controllers
             showPanelIndefinitely.isOn = Manager.ShowCurrentTrackPanelIndefinitely;
             showPanelIndefinitely.onValueChanged.AddListener(state =>
                 Manager.ShowCurrentTrackPanelIndefinitely = state);
+            
+            enablePreview.isOn = Manager.EnableTracksPreview;
+            enablePreview.onValueChanged.AddListener(state =>
+                Manager.EnableTracksPreview = state);            
+            
+            bigNowPlayingPanel.isOn = Manager.ShowBigNowPlayingPanel;
+            bigNowPlayingPanel.onValueChanged.AddListener(state =>
+                Manager.ShowBigNowPlayingPanel = state);
 
             subtitles.isOn = prefsManager.GetBool("subtitlesEnabled");
             subtitles.onValueChanged.AddListener(state =>
@@ -158,6 +172,9 @@ namespace CybergrindMusicExplorer.GUI.Controllers
 
             playbackHotkey.button.onClick.AddListener(() => ChangeKey(playbackHotkey.button.gameObject));
             playbackHotkey.value.text = ToHumanReadable((KeyCode)Manager.PlaybackMenuBinding);
+            
+            displayPlayerHotkey.button.onClick.AddListener(() => ChangeKey(displayPlayerHotkey.button.gameObject));
+            displayPlayerHotkey.value.text = ToHumanReadable((KeyCode)Manager.DisablePlayerBinding);
         }
 
         private void SetupThemes()
