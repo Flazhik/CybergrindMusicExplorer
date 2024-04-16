@@ -17,7 +17,7 @@ namespace CybergrindMusicExplorer.Patches
 
             var boost = _manager.allowMusicBoost ? _manager.CustomTracksBoost : 0;
             if (!__instance.forceOff)
-                __instance.musicSound.SetFloat("allVolume", __instance.CalculateMusicVolume(volume) + boost);
+                __instance.musicSound.SetFloat("allVolume", __instance.CalculateVolume(volume) + boost);
             __instance.musicVolume = volume;
 
             return false;

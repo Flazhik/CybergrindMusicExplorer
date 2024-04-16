@@ -36,12 +36,12 @@ namespace CybergrindMusicExplorer.Components
         public static Dictionary<EnemyType, Sprite> LoadEnemiesSprites()
         {
             var handle = new AssetReferenceT<SpawnableObjectsDatabase>(SpawnableObjectDatabaseGuid).LoadAssetAsync();
-
             var database = handle.WaitForCompletion();
             Addressables.Release(handle);
 
             return database.enemies
                 .ToList()
+                .Where(e => e.enemyType != EnemyType.Centaur)
                 .Select(enemy => new { enemy.enemyType, enemy.gridIcon })
                 .ToDictionary(enemy => enemy.enemyType, enemy => enemy.gridIcon);
         }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Threading.Tasks;
 using BepInEx;
 using CybergrindMusicExplorer.Components;
@@ -9,7 +8,6 @@ using CybergrindMusicExplorer.Util;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static CybergrindMusicExplorer.Patches.Patches;
-using static CybergrindMusicExplorer.Util.KeyUtils;
 
 namespace CybergrindMusicExplorer
 
@@ -36,28 +34,27 @@ namespace CybergrindMusicExplorer
         private void Awake()
         {
             Logger.LogInfo("Initializing Cybergrind Music Explorer");
-            StartCoroutine(Startup());
+            Startup();
             
             AssetsManager.Instance.LoadAssets();
             AssetsManager.Instance.RegisterPrefabs();
         }
 
-        private IEnumerator Startup()
+        private void Startup()
         {
-            SceneManager.sceneLoaded += (scene, mode) => StartCoroutine(OnSceneLoaded(scene, mode));
+            SceneManager.sceneLoaded += OnSceneLoaded;
             GUIManager.Init();
             cybergrindEffectsChanger = CybergrindEffectsChanger.Instance;
             tracksDownloadManager = TracksDownloadManager.Instance;
             #pragma warning disable CS4014
             RetrieveNewestVersion();
             #pragma warning restore CS4014
-            yield return null;
         }
 
-        private IEnumerator OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
+        private void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
         {
             if (scene != SceneManager.GetActiveScene())
-                yield break;
+                return;
 
             switch (SceneHelper.CurrentScene)
             {
@@ -69,7 +66,7 @@ namespace CybergrindMusicExplorer
                     
                     if (fileBrowser != null)
                         break;
-                    yield return OnCybergrind();
+                    OnCybergrind();
                     break;
                 }
                 case "Main Menu":
@@ -81,7 +78,7 @@ namespace CybergrindMusicExplorer
             }
         }
 
-        private IEnumerator OnCybergrind()
+        private void OnCybergrind()
         {
             MonoSingleton<CybergrindMusicExplorerManager>.Instance.allowMusicBoost = true;
             CalmThemeManager.Instance.Init();
@@ -99,19 +96,6 @@ namespace CybergrindMusicExplorer
             fileBrowser = musicObject.AddComponent<EnhancedMusicFileBrowser>();
             Destroy(oldBrowser);
             ClearTmpDirectory();
-            yield return new WaitForSeconds(2.5f);
-            DisplayMenuMessage();
-        }
-
-        private void DisplayMenuMessage()
-        {
-            var manager = MonoSingleton<CybergrindMusicExplorerManager>.Instance;
-            if (menuMessageIsShown)
-                return;
-
-            HudMessageReceiver.Instance.SendHudMessage(
-                $"To open Cybergrind Music Explorer settings now or midgame, press [<color=orange>{ToHumanReadable((KeyCode)manager.MenuBinding)}</color>]");
-            menuMessageIsShown = true;
         }
 
         private void OnEnhancedBrowserInit()
