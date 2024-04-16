@@ -30,7 +30,7 @@ Formerly the main focus of this mod was to allow to play custom music in Cyber G
 2. Extract the contents of **BepInEx** archive in your local **ULTRAKILL** folder. If you're not sure where this folder
    is located, find **ULTRAKILL** in your Steam Library > Right mouse click > **Properties** > **Local files** > **Browse**
 3. Download the CybergrindMusicExplorer
-   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.6.2/CybergrindMusicExplorer.v1.6.2.zip), then
+   archive [here](https://github.com/Flazhik/CybergrindMusicExplorer/releases/download/v1.6.3/CybergrindMusicExplorer.v1.6.3.zip), then
    extract its contents at **ULTRAKILL/BepInEx/plugins** (create *plugins* folder manually in case it's missing)
 
 You can also use r2modman for that. Both methods are described in the video below (click to open):
