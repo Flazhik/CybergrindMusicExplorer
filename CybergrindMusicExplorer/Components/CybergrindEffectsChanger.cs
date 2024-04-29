@@ -15,7 +15,7 @@ namespace CybergrindMusicExplorer.Components
         private const string TerminalPath = "/FirstRoom/Room/CyberGrindSettings";
         private static bool _initialized;
 
-        public void Start()
+        protected override void Awake()
         {
             if (!_initialized)
             {
